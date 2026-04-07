@@ -20,6 +20,16 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
+const validateRuntimeConfig = () => {
+  if (!config.secretKey) {
+    throw new Error('JWT_SECRET is required');
+  }
+
+  if (String(config.secretKey).length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters long');
+  }
+};
+
 const createApp = () => {
   const app = express();
 
@@ -40,6 +50,7 @@ const createApp = () => {
 };
 
 const startServer = async ({ port = process.env.PORT || 5001 } = {}) => {
+  validateRuntimeConfig();
   await mongoose.connect(config.localDB);
 
   const app = createApp();
@@ -63,4 +74,5 @@ if (require.main === module) {
 module.exports = {
   createApp,
   startServer,
+  validateRuntimeConfig,
 };

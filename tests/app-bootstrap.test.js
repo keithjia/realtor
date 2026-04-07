@@ -106,6 +106,10 @@ describe("app bootstrap regressions", () => {
     const { startServer } = loadModuleWithStubs(
       path.resolve(__dirname, "../server/app.js"),
       {
+        "./config/config": {
+          secretKey: "0123456789abcdef0123456789abcdef",
+          localDB: "mongodb://localhost/realestatedb",
+        },
         mongoose: {
           connect: async (url) => {
             connectUrl = url;
@@ -148,5 +152,41 @@ describe("app bootstrap regressions", () => {
     });
 
     assert.strictEqual(closeInvoked, true);
+  });
+
+  it("fails fast when JWT_SECRET is missing or weak", () => {
+    const appModulePath = path.resolve(__dirname, "../server/app.js");
+
+    const missingSecretModule = loadModuleWithStubs(appModulePath, {
+      "./config/config": {
+        secretKey: "",
+        localDB: "mongodb://localhost/testdb",
+      },
+      "./routes/users": express.Router(),
+      "./routes/auth": express.Router(),
+      "./routes/common": express.Router(),
+      "./routes/property": express.Router(),
+      "./routes/email": express.Router(),
+    });
+
+    assert.throws(() => {
+      missingSecretModule.validateRuntimeConfig();
+    }, /JWT_SECRET is required/);
+
+    const weakSecretModule = loadModuleWithStubs(appModulePath, {
+      "./config/config": {
+        secretKey: "short-secret",
+        localDB: "mongodb://localhost/testdb",
+      },
+      "./routes/users": express.Router(),
+      "./routes/auth": express.Router(),
+      "./routes/common": express.Router(),
+      "./routes/property": express.Router(),
+      "./routes/email": express.Router(),
+    });
+
+    assert.throws(() => {
+      weakSecretModule.validateRuntimeConfig();
+    }, /JWT_SECRET must be at least 32 characters long/);
   });
 });
