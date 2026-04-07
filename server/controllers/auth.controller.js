@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const userM = require("../models/users");
 const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
 
+const MIN_PASSWORD_LENGTH = 12;
+
 module.exports = {
   userLogin: async (req, res) => {
     try {
@@ -62,6 +64,19 @@ module.exports = {
   },
   userRegistration: async (req, res) => {
     try {
+      const requiredFields = ["fname", "lName", "email", "phoneNo", "password"];
+      const missingField = requiredFields.find((field) => !req.body[field]);
+
+      if (missingField) {
+        return res.status(400).json({ message: `${missingField} is required` });
+      }
+
+      if (String(req.body.password).length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
+        });
+      }
+
       const users = new userM();
       users.fname = req.body.fname;
       users.lname = req.body.lName;
@@ -80,6 +95,10 @@ module.exports = {
         .status(200)
         .json({ message: "User Added Successfully", id: data._id });
     } catch (err) {
+      if (err && err.code === 11000) {
+        return res.status(409).json({ message: "A user with those credentials already exists" });
+      }
+
       return res.status(400).json({ message: "Unable to register user" });
     }
   },
