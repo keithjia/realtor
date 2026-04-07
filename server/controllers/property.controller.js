@@ -74,8 +74,12 @@ module.exports = {
       else throw new Error('Something Went Wrong');
     }
     catch (err) {
+      if (err && err.code === 11000 && err.keyPattern && err.keyPattern.slug) {
+        return res.status(409).json({ message: 'A property with this slug already exists' });
+      }
+
       console.log({ err });
-      res.status(400).json({ message: err.message });
+      return res.status(400).json({ message: err.message });
     }
   },
   getUserList: (req, res) => {

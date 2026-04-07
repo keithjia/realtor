@@ -93,7 +93,8 @@ const propertySchema = mongoose.model('property', new mongoose.Schema({
   },
   slug: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   images: {
     type: [String]
