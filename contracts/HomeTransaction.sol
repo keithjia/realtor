@@ -194,15 +194,21 @@ contract HomeTransaction {
     }
 
     function withdrawPayout() public {
+        withdrawPayoutTo(msg.sender);
+    }
+
+    function withdrawPayoutTo(address payable recipient) public {
+        require(recipient != address(0), "Recipient cannot be zero");
+
         uint amount = pendingWithdrawals[msg.sender];
         require(amount > 0, "No payout available");
 
         pendingWithdrawals[msg.sender] = 0;
 
-        (bool success, ) = msg.sender.call.value(amount)("");
+        (bool success, ) = recipient.call.value(amount)("");
         require(success, "Withdrawal failed");
 
-        emit PayoutWithdrawn(msg.sender, amount);
+        emit PayoutWithdrawn(recipient, amount);
     }
 
     function _creditPayout(address payable recipient, uint amount) internal {
