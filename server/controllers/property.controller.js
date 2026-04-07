@@ -7,6 +7,8 @@ var Property = require('../models/property');
 
 var gfs;
 var conn = mongoose.connection;
+const PUBLIC_PROPERTY_FIELDS = '-email -phoneNo -userId';
+
 conn.on('connected', () => {
   gfs = Grid(conn.db, mongoose.mongo);
   gfs.collection('imageMeta');
@@ -100,6 +102,7 @@ module.exports = {
     try {
       const imageStore = req.gfs || gfs;
       var result = await Property.findOne({ slug: req.params.propertySlug })
+        .select(PUBLIC_PROPERTY_FIELDS)
         .populate('city', 'name')
         .populate('state', 'name')
         .populate('type', 'title');
@@ -123,10 +126,10 @@ module.exports = {
   getFullList: (req, res) => {
     const { limit, skip } = helpers.getPagination(req.query);
     Property.find({ isActive: true })
+      .select(PUBLIC_PROPERTY_FIELDS)
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
-      .populate('userId', 'name')
       .limit(limit)
       .skip(skip)
       .exec((err, result) => {
@@ -162,10 +165,10 @@ module.exports = {
     if (req.query.status)
       query['status'] = { $in: req.query.status.split(",") }
     Property.find(query)
+      .select(PUBLIC_PROPERTY_FIELDS)
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
-      .populate('userId', 'name')
       .limit(limit)
       .skip(skip)
       .exec((err, result) => {

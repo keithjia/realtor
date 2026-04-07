@@ -46,7 +46,53 @@ const requireAdmin = (req, res, next) => {
   });
 };
 
+const requireSelfOrAdmin = (getTargetUserId) => (req, res, next) => {
+  return requireAuth(req, res, () => {
+    const targetUserId = String(getTargetUserId(req) || "");
+    const authenticatedUserId = String((req.user && req.user._id) || "");
+
+    if (!targetUserId) {
+      return res.status(400).json({ message: "User scope is required" });
+    }
+
+    if (req.user && req.user.isAdmin) {
+      return next();
+    }
+
+    if (authenticatedUserId !== targetUserId) {
+      return res.status(403).json({ message: "Not authorized to access this user scope" });
+    }
+
+    return next();
+  });
+};
+
+const requireScopedUserQueryOrAdmin = (keys) => (req, res, next) => {
+  const scopedKey = keys.find((key) => req.query[key]);
+
+  if (!scopedKey) {
+    return next();
+  }
+
+  return requireAuth(req, res, () => {
+    if (req.user && req.user.isAdmin) {
+      return next();
+    }
+
+    const authenticatedUserId = String((req.user && req.user._id) || "");
+    const requestedUserId = String(req.query[scopedKey] || "");
+
+    if (authenticatedUserId !== requestedUserId) {
+      return res.status(403).json({ message: "Not authorized to access this user scope" });
+    }
+
+    return next();
+  });
+};
+
 module.exports = {
   requireAuth,
   requireAdmin,
+  requireSelfOrAdmin,
+  requireScopedUserQueryOrAdmin,
 };

@@ -156,10 +156,36 @@ describe("sensitive route authorization", () => {
       assert.deepStrictEqual(await adminResponse.json(), {
         route: "addState",
       });
+
+      const userEmailLookup = await fetch(
+        `${baseUrl}/checkemail-availability/email/test@example.com`,
+        {
+          headers: {
+            Authorization: `Bearer ${createToken()}`,
+          },
+        }
+      );
+      assert.strictEqual(userEmailLookup.status, 403);
+      assert.deepStrictEqual(await userEmailLookup.json(), {
+        message: "Admin access required",
+      });
+
+      const adminEmailLookup = await fetch(
+        `${baseUrl}/checkemail-availability/email/test@example.com`,
+        {
+          headers: {
+            Authorization: `Bearer ${createToken({ isAdmin: true })}`,
+          },
+        }
+      );
+      assert.strictEqual(adminEmailLookup.status, 200);
+      assert.deepStrictEqual(await adminEmailLookup.json(), {
+        route: "checkemailAvailability",
+      });
     });
   });
 
-  it("protects property mutation routes while allowing authenticated property creation", async () => {
+  it("protects property mutation and user-scoped property routes", async () => {
     const multerStub = function multer() {
       return {
         array: () => (req, res, next) => next(),
@@ -224,6 +250,52 @@ describe("sensitive route authorization", () => {
       assert.strictEqual(authenticatedCreate.status, 200);
       assert.deepStrictEqual(await authenticatedCreate.json(), {
         route: "addNewProperty",
+      });
+
+      const anonymousUserList = await fetch(`${baseUrl}/list/user-1`);
+      assert.strictEqual(anonymousUserList.status, 401);
+
+      const forbiddenUserList = await fetch(`${baseUrl}/list/user-2`, {
+        headers: {
+          Authorization: `Bearer ${createToken({ _id: "user-1" })}`,
+        },
+      });
+      assert.strictEqual(forbiddenUserList.status, 403);
+      assert.deepStrictEqual(await forbiddenUserList.json(), {
+        message: "Not authorized to access this user scope",
+      });
+
+      const ownUserList = await fetch(`${baseUrl}/list/user-1`, {
+        headers: {
+          Authorization: `Bearer ${createToken({ _id: "user-1" })}`,
+        },
+      });
+      assert.strictEqual(ownUserList.status, 200);
+      assert.deepStrictEqual(await ownUserList.json(), {
+        route: "getUserList",
+      });
+
+      const anonymousScopedFilter = await fetch(`${baseUrl}/filter?userId=user-1`);
+      assert.strictEqual(anonymousScopedFilter.status, 401);
+
+      const forbiddenScopedFilter = await fetch(`${baseUrl}/filter?userId=user-2`, {
+        headers: {
+          Authorization: `Bearer ${createToken({ _id: "user-1" })}`,
+        },
+      });
+      assert.strictEqual(forbiddenScopedFilter.status, 403);
+      assert.deepStrictEqual(await forbiddenScopedFilter.json(), {
+        message: "Not authorized to access this user scope",
+      });
+
+      const ownScopedFilter = await fetch(`${baseUrl}/filter?userId=user-1`, {
+        headers: {
+          Authorization: `Bearer ${createToken({ _id: "user-1" })}`,
+        },
+      });
+      assert.strictEqual(ownScopedFilter.status, 200);
+      assert.deepStrictEqual(await ownScopedFilter.json(), {
+        route: "filterProperties",
       });
     });
   });

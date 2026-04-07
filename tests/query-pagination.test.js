@@ -197,6 +197,9 @@ describe("query pagination regressions", () => {
   it("applies pagination to property list and filter queries", () => {
     const captures = [];
     const makeQueryChain = () => ({
+      select() {
+        return this;
+      },
       populate() {
         return this;
       },

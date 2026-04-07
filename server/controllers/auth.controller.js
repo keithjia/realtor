@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userM = require("../models/users");
 const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
+const { logAdminAudit } = require("../middleware/audit");
 
 const MIN_PASSWORD_LENGTH = 12;
 const INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
@@ -162,6 +163,18 @@ module.exports = {
 
       const hash = await bcrypt.hash(req.body.password, 10);
       const resp = await userM.updateOne({ _id: req.body._id }, { password: hash });
+
+      if (authenticatedUser.isAdmin) {
+        logAdminAudit({
+          action: "admin.user_password.change",
+          req,
+          statusCode: 200,
+          target: targetUserId,
+          details: {
+            changedByAdmin: true,
+          },
+        });
+      }
 
       return res
         .status(200)

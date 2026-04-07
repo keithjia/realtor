@@ -75,7 +75,7 @@ const withServer = async (router, runAssertions) => {
 };
 
 describe('email availability authorization regressions', () => {
-  it('rejects anonymous email enumeration and allows authenticated access', async () => {
+  it('rejects anonymous and non-admin email enumeration while allowing admins', async () => {
     const commonRouter = loadModuleWithStubs(
       path.resolve(__dirname, '../server/routes/common.js'),
       {
@@ -109,8 +109,21 @@ describe('email availability authorization regressions', () => {
           },
         }
       );
-      assert.strictEqual(authenticatedResponse.status, 200);
+      assert.strictEqual(authenticatedResponse.status, 403);
       assert.deepStrictEqual(await authenticatedResponse.json(), {
+        message: 'Admin access required',
+      });
+
+      const adminResponse = await fetch(
+        `${baseUrl}/checkemail-availability/email/test@example.com`,
+        {
+          headers: {
+            Authorization: `Bearer ${createToken({ isAdmin: true, _id: 'admin-1' })}`,
+          },
+        }
+      );
+      assert.strictEqual(adminResponse.status, 200);
+      assert.deepStrictEqual(await adminResponse.json(), {
         response: true,
         email: 'test@example.com',
       });
