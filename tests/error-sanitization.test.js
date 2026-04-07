@@ -135,7 +135,7 @@ describe('error sanitization regressions', () => {
     });
 
     const token = jwt.sign(
-      { user: { _id: 'u1', isAdmin: false } },
+      { user: { _id: 'u1', isAdmin: true } },
       config.secretKey,
       {
         issuer: config.jwtIssuer,

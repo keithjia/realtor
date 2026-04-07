@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const helpers = require('../providers/helper');
-const { requireAuth } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 
 const sgMail = require('@sendgrid/mail');
 
@@ -9,7 +9,7 @@ const sendEmail = (data) => {
   return sgMail.send(data)
 }
 
-router.post('/github-pages', requireAuth, (req, res) => {
+router.post('/github-pages', requireAdmin, (req, res) => {
   let errorMessage = ''
   const checkMissingKey = helpers.isKeyMissing(req.body, ['toEmail', 'fromEmail', 'name', 'email', 'message']);
 

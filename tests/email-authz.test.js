@@ -75,13 +75,14 @@ const withServer = async (router, runAssertions) => {
 };
 
 describe("email route authorization regressions", () => {
-  it("rejects anonymous email submissions and allows authenticated requests", async () => {
+  it("rejects anonymous and non-admin email submissions, while allowing admins", async () => {
     /*
      * Regression test for:
      *
-     * High: the public email endpoint acted as an unauthenticated relay.
-     * For this assessment, requiring authenticated access is the intended
-     * control even though we are not wiring full anti-abuse integrations.
+     * High: the email relay remained abuse-prone because any self-registered
+     * user could authenticate and send mail.
+     * For this assessment, restricting the route to admins is the intended
+     * hardening step instead of wiring full verification / anti-abuse systems.
      */
     process.env.SENDGRID_API_KEY = "test-sendgrid-key";
     process.env.SENDGRID_TEMPLATE_ID = "template-123";
@@ -136,8 +137,27 @@ describe("email route authorization regressions", () => {
           message: "Hello",
         }),
       });
-      assert.strictEqual(authenticatedResponse.status, 200);
+      assert.strictEqual(authenticatedResponse.status, 403);
       assert.deepStrictEqual(await authenticatedResponse.json(), {
+        message: "Admin access required",
+      });
+
+      const adminResponse = await fetch(`${baseUrl}/github-pages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${createToken({ _id: "admin-1", isAdmin: true })}`,
+        },
+        body: JSON.stringify({
+          toEmail: "to@example.com",
+          fromEmail: "from@example.com",
+          name: "Keith",
+          email: "from@example.com",
+          message: "Hello",
+        }),
+      });
+      assert.strictEqual(adminResponse.status, 200);
+      assert.deepStrictEqual(await adminResponse.json(), {
         message: "Email sent successfully",
       });
     });
