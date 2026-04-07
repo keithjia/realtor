@@ -83,10 +83,13 @@ module.exports = {
     }
   },
   getUserList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     Property.find({ isActive: true, userId: req.params.userId })
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
           return res.status(400).json({ message: 'Unable to fetch user properties' });

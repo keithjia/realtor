@@ -36,8 +36,11 @@ module.exports = {
       });
   },
   getCityList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     city_model.find({ state_id: req.params.state_id, is_active: true })
       .populate('state_id', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, data) => {
         if (err)
           return res.status(400).json({ message: 'Unable to fetch cities for state' });
