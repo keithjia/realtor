@@ -84,29 +84,34 @@ describe("password exposure regressions", () => {
     assert.deepStrictEqual(res.payload, { message: "Success", data: [] });
   });
 
-  it("excludes password hashes from user detail lookups", () => {
+  it("excludes password hashes from user detail lookups", async () => {
     let selectArg = null;
     let populateCalls = [];
-    let execCalled = false;
+    let findOneQuery = null;
 
     const usersController = loadModuleWithStubs(
       path.resolve(__dirname, "../server/controllers/users.controller.js"),
       {
         "../models/users": {
-          findOne: (query) => ({
-            select(value) {
-              selectArg = value;
-              return this;
-            },
-            populate(pathName, fields) {
-              populateCalls.push([pathName, fields]);
-              return this;
-            },
-            exec(callback) {
-              execCalled = true;
-              callback(null, { _id: query._id });
-            },
-          }),
+          findOne: (query) => {
+            const queryChain = {
+              _query: query,
+              select(value) {
+                selectArg = value;
+                return this;
+              },
+              populate(pathName, fields) {
+                populateCalls.push([pathName, fields]);
+                return this;
+              },
+              then(resolve, reject) {
+                findOneQuery = this._query;
+                return Promise.resolve({ _id: query._id }).then(resolve, reject);
+              },
+            };
+
+            return queryChain;
+          },
         },
       }
     );
@@ -124,14 +129,20 @@ describe("password exposure regressions", () => {
       },
     };
 
-    usersController.getUserDetails({ params: { userId: "abc123" } }, res);
+    await usersController.getUserDetails(
+      {
+        user: { _id: "abc123", isAdmin: false },
+        params: { userId: "abc123" },
+      },
+      res
+    );
 
     assert.strictEqual(selectArg, "-password");
     assert.deepStrictEqual(populateCalls, [
       ["city", "name"],
       ["state", "name"],
     ]);
-    assert.strictEqual(execCalled, true);
+    assert.deepStrictEqual(findOneQuery, { _id: "abc123" });
     assert.strictEqual(res.statusCode, 200);
     assert.deepStrictEqual(res.payload, { _id: "abc123" });
   });
