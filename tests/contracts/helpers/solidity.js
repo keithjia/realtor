@@ -82,6 +82,12 @@ const getWallets = async (provider) => {
   return accounts.map((account) => provider.getSigner(account));
 };
 
+const mineBlocks = async (provider, count) => {
+  for (let index = 0; index < count; index += 1) {
+    await provider.send("evm_mine", []);
+  }
+};
+
 const deployContract = async ({ fileName, contractName, signer, args = [], overrides = {} }) => {
   const artifact = getArtifact(fileName, contractName);
   const factory = new ethers.ContractFactory(
@@ -100,4 +106,5 @@ module.exports = {
   deployContract,
   getArtifact,
   getWallets,
+  mineBlocks,
 };

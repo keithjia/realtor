@@ -43,6 +43,7 @@ contract HomeTransaction {
 
     // Constants
     uint constant timeBetweenDepositAndFinalization = 5 minutes;
+    uint constant timeBetweenDepositAndFinalizationBlocks = 25;
     uint constant depositPercentage = 10;
     mapping(address => uint) public pendingWithdrawals;
 
@@ -71,6 +72,7 @@ contract HomeTransaction {
     // Set when buyer signs and pays deposit
     uint public deposit;
     uint public finalizeDeadline;
+    uint public finalizeDeadlineBlock;
 
     // Set when realtor reviews closing conditions
     enum ClosingConditionsReview { Pending, Accepted, Rejected }
@@ -131,6 +133,8 @@ contract HomeTransaction {
 
         deposit = msg.value;
         finalizeDeadline = now.add(timeBetweenDepositAndFinalization);
+        // Pair the timestamp deadline with a block-based deadline to reduce reliance on miner-controlled timestamps alone.
+        finalizeDeadlineBlock = block.number.add(timeBetweenDepositAndFinalizationBlocks);
 
         emit BuyerSignedAndDeposited(msg.sender, msg.value, finalizeDeadline);
     }
@@ -158,7 +162,7 @@ contract HomeTransaction {
         require(buyer == msg.sender, "Only buyer can finalize transaction");
 
         require(contractState == ContractState.WaitingFinalization, "Wrong contract state");
-        require(now <= finalizeDeadline, "Finalization deadline has expired");
+        require(!_isPastFinalizationDeadline(), "Finalization deadline has expired");
 
         require(msg.value.add(deposit) == price, "Buyer needs to pay the rest of the cost to finalize transaction");
 
@@ -175,7 +179,7 @@ contract HomeTransaction {
             buyer == msg.sender || seller == msg.sender || realtor == msg.sender,
             "Only a transaction participant can trigger withdrawal"
         );
-        require(buyer == msg.sender || finalizeDeadline <= now, "Only buyer can withdraw before transaction deadline");
+        require(buyer == msg.sender || _isPastFinalizationDeadline(), "Only buyer can withdraw before transaction deadline");
 
         require(
             contractState == ContractState.WaitingFinalization || contractState == ContractState.WaitingRealtorReview,
@@ -236,5 +240,9 @@ contract HomeTransaction {
         // Pending payouts are accumulated across settlement paths, so use checked addition.
         pendingWithdrawals[recipient] = pendingWithdrawals[recipient].add(amount);
         emit PayoutCredited(recipient, amount);
+    }
+
+    function _isPastFinalizationDeadline() internal view returns (bool) {
+        return now > finalizeDeadline && block.number > finalizeDeadlineBlock;
     }
 }

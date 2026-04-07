@@ -1,9 +1,9 @@
 const assert = require("assert");
 const { ethers } = require("ethers");
-const { createProvider, deployContract, getWallets, mineBlocks } = require("./helpers/solidity");
+const { createProvider, deployContract, getWallets } = require("./helpers/solidity");
 
-describe("HomeTransaction finalization deadline regressions", () => {
-  it("does not allow the buyer to finalize after the deadline has expired", async () => {
+describe("HomeTransaction deadline manipulation regressions", () => {
+  it("does not treat the deal as expired when only the timestamp threshold has passed", async () => {
     const provider = createProvider();
     const [realtor, seller, buyer] = await getWallets(provider);
 
@@ -32,13 +32,19 @@ describe("HomeTransaction finalization deadline regressions", () => {
     await (await contract.connect(realtor).realtorReviewedClosingConditions(true)).wait();
 
     await provider.send("evm_increaseTime", [5 * 60 + 1]);
-    await mineBlocks(provider, 26);
+    await provider.send("evm_mine", []);
 
     await assert.rejects(
-      contract
-        .connect(buyer)
-        .buyerFinalizeTransaction({ value: ethers.BigNumber.from(90) }),
-      /deadline/i
+      contract.connect(seller).anyWithdrawFromTransaction(),
+      /before transaction deadline/i
     );
+
+    await (
+      await contract
+        .connect(buyer)
+        .buyerFinalizeTransaction({ value: ethers.BigNumber.from(90) })
+    ).wait();
+
+    assert.strictEqual((await contract.contractState()).toString(), "4");
   });
 });

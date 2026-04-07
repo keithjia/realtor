@@ -1,6 +1,6 @@
 const assert = require("assert");
 const { ethers } = require("ethers");
-const { createProvider, deployContract, getWallets } = require("./helpers/solidity");
+const { createProvider, deployContract, getWallets, mineBlocks } = require("./helpers/solidity");
 
 describe("HomeTransaction realtor-review timeout regressions", () => {
   it("lets the buyer recover the deposit if the realtor never reviews before the deadline", async () => {
@@ -34,7 +34,7 @@ describe("HomeTransaction realtor-review timeout regressions", () => {
     assert.strictEqual((await contract.contractState()).toString(), "2");
 
     await provider.send("evm_increaseTime", [5 * 60 + 1]);
-    await provider.send("evm_mine", []);
+    await mineBlocks(provider, 26);
 
     await (await contract.connect(buyer).anyWithdrawFromTransaction()).wait();
 
