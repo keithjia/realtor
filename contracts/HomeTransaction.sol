@@ -179,12 +179,19 @@ contract HomeTransaction {
             buyer == msg.sender || seller == msg.sender || realtor == msg.sender,
             "Only a transaction participant can trigger withdrawal"
         );
-        require(buyer == msg.sender || _isPastFinalizationDeadline(), "Only buyer can withdraw before transaction deadline");
 
         require(
             contractState == ContractState.WaitingFinalization || contractState == ContractState.WaitingRealtorReview,
             "Wrong contract state"
         );
+
+        if (contractState == ContractState.WaitingRealtorReview) {
+            // Business rule: once the buyer has posted a deposit, they should not have a free cancellation
+            // path while the realtor still has time to review closing conditions.
+            require(_isPastFinalizationDeadline(), "Cannot withdraw during pending review before deadline");
+        } else {
+            require(buyer == msg.sender || _isPastFinalizationDeadline(), "Only buyer can withdraw before transaction deadline");
+        }
 
         contractState = ContractState.Rejected;
 
