@@ -38,11 +38,16 @@ module.exports = {
   addNewProperty: async (req, res) => {
     let imgs = [];
     try {
+      if (!req.user || !req.user._id) {
+        throw new Error('Authenticated user is required');
+      }
+
       if (req.files && req.files.length)
         req.files.forEach(ele => imgs.push(ele.filename))
       var slug = await helpers.slugGenerator(req.body.title, 'title', 'property');
       req.body.slug = slug;
       req.body.type = req.body.Proptype;
+      req.body.userId = req.user._id;
       req.body.cornrPlot = req.body.cornrPlot ? true : false;
       req.body.images = imgs;
       req.body.imgPath = 'properties';
