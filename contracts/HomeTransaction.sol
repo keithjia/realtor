@@ -95,7 +95,7 @@ contract HomeTransaction {
         realtorFee = _realtorFee;
     }
 
-    function sellerSignContract() public payable {
+    function sellerSignContract() public {
         require(seller == msg.sender, "Only seller can sign contract");
 
         require(contractState == ContractState.WaitingSellerSignature, "Wrong contract state");
