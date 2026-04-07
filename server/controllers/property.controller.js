@@ -78,7 +78,6 @@ module.exports = {
         return res.status(409).json({ message: 'A property with this slug already exists' });
       }
 
-      console.log({ err });
       return res.status(400).json({ message: err.message });
     }
   },
@@ -140,7 +139,6 @@ module.exports = {
   markAsSold: async (req, res) => {
     try {
       const result = await Property.update({ slug: req.params.propertySlug }, { status: req.body.status });
-      console.log({ result });
       if (result && result.nModified == 1) res.status(200).json({ result, message: "Property has been updated Successfully" });
       else throw new Error('Error in updating property');
     }
@@ -163,7 +161,6 @@ module.exports = {
       query['userId'] = { $ne: req.query.notUserId }
     if (req.query.status)
       query['status'] = { $in: req.query.status.split(",") }
-    console.log({ query });
     Property.find(query)
       .populate('city', 'name')
       .populate('state', 'name')
@@ -180,7 +177,6 @@ module.exports = {
   },
   testController: async (req, res) => {
     const testData = await Property.find({ updatedOn: { $gte: '2019-04-01' } })
-    console.log({ testData });
     return res.send(testData);
   },
   showGFSImage: (req, res) => {

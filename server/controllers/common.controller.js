@@ -51,7 +51,6 @@ module.exports = {
     try {
       var city = new city_model(req.body);
       const result = await city.save();
-      console.log({ result });
       if (result) res.status(200).json({ message: 'City added successfully' });
       else throw new Error('Something Went Wrong');
     }
