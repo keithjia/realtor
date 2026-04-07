@@ -4,6 +4,7 @@ const userM = require("../models/users");
 const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
 
 const MIN_PASSWORD_LENGTH = 12;
+const INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
 
 module.exports = {
   userLogin: async (req, res) => {
@@ -23,13 +24,13 @@ module.exports = {
         .select("+password");
 
       if (!data) {
-        return res.status(401).json({ message: "Invalid Credentials2" });
+        return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
       }
 
       const passMatch = await bcrypt.compare(req.body.password, data.password);
 
       if (!passMatch) {
-        return res.status(401).json({ message: "Invalid Credentials1" });
+        return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
       }
 
       if (!secretKey) {
