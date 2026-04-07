@@ -66,7 +66,7 @@ module.exports = {
     });
   },
   userList: (req, res) => {
-    userM.find().exec((err, data) => {
+    userM.find().select("-password").exec((err, data) => {
       if (err)
         res.status(400).json({ message: "Something Went Wrong", data: err });
       else res.status(200).json({ message: "Success", data });
