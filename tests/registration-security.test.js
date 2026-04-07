@@ -127,6 +127,105 @@ describe('registration security regressions', () => {
     });
   });
 
+  it('rejects malformed email and phone values', async () => {
+    const authController = loadModuleWithStubs(
+      path.resolve(__dirname, '../server/controllers/auth.controller.js'),
+      {
+        '../models/users': function UserStub() {},
+      }
+    );
+
+    const invalidEmailResponse = createResponseRecorder();
+    await authController.userRegistration(
+      {
+        body: {
+          fname: 'Keith',
+          lName: 'Jia',
+          email: 'not-an-email',
+          phoneNo: '1234567890',
+          password: 'verystrongpass'
+        }
+      },
+      invalidEmailResponse
+    );
+
+    assert.strictEqual(invalidEmailResponse.statusCode, 400);
+    assert.deepStrictEqual(invalidEmailResponse.payload, {
+      message: 'email is invalid'
+    });
+
+    const invalidPhoneResponse = createResponseRecorder();
+    await authController.userRegistration(
+      {
+        body: {
+          fname: 'Keith',
+          lName: 'Jia',
+          email: 'user@example.com',
+          phoneNo: 'abc',
+          password: 'verystrongpass'
+        }
+      },
+      invalidPhoneResponse
+    );
+
+    assert.strictEqual(invalidPhoneResponse.statusCode, 400);
+    assert.deepStrictEqual(invalidPhoneResponse.payload, {
+      message: 'phoneNo is invalid'
+    });
+  });
+
+  it('normalizes email, phone, and name fields before saving', async () => {
+    let savedUser = null;
+
+    function UserStub() {
+      this.save = async () => {
+        savedUser = {
+          fname: this.fname,
+          lname: this.lname,
+          email: this.email,
+          phoneNo: this.phoneNo,
+          password: this.password
+        };
+        return { _id: 'user-2' };
+      };
+    }
+
+    const authController = loadModuleWithStubs(
+      path.resolve(__dirname, '../server/controllers/auth.controller.js'),
+      {
+        '../models/users': UserStub,
+        bcryptjs: {
+          hash(password) {
+            return Promise.resolve(`hashed:${password}`);
+          }
+        }
+      }
+    );
+
+    const res = createResponseRecorder();
+    await authController.userRegistration(
+      {
+        body: {
+          fname: '  Keith  ',
+          lName: "  O'Jia  ",
+          email: '  USER@Example.COM ',
+          phoneNo: '(123) 456-7890',
+          password: 'verystrongpass'
+        }
+      },
+      res
+    );
+
+    assert.deepStrictEqual(savedUser, {
+      fname: 'Keith',
+      lname: "O'Jia",
+      email: 'user@example.com',
+      phoneNo: '1234567890',
+      password: 'hashed:verystrongpass'
+    });
+    assert.strictEqual(res.statusCode, 200);
+  });
+
   it('still allows valid registrations', async () => {
     let savedPassword = null;
 

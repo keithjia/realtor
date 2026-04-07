@@ -5,6 +5,13 @@ const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/c
 
 const MIN_PASSWORD_LENGTH = 12;
 const INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\d{10,15}$/;
+const NAME_PATTERN = /^[a-zA-Z\s'-]{1,100}$/;
+
+const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
+const normalizeName = (value) => String(value || "").trim();
 
 module.exports = {
   userLogin: async (req, res) => {
@@ -78,11 +85,32 @@ module.exports = {
         });
       }
 
+      const normalizedFname = normalizeName(req.body.fname);
+      const normalizedLname = normalizeName(req.body.lName);
+      const normalizedEmail = normalizeEmail(req.body.email);
+      const normalizedPhone = normalizePhone(req.body.phoneNo);
+
+      if (!NAME_PATTERN.test(normalizedFname)) {
+        return res.status(400).json({ message: "fname is invalid" });
+      }
+
+      if (!NAME_PATTERN.test(normalizedLname)) {
+        return res.status(400).json({ message: "lName is invalid" });
+      }
+
+      if (!EMAIL_PATTERN.test(normalizedEmail)) {
+        return res.status(400).json({ message: "email is invalid" });
+      }
+
+      if (!PHONE_PATTERN.test(normalizedPhone)) {
+        return res.status(400).json({ message: "phoneNo is invalid" });
+      }
+
       const users = new userM();
-      users.fname = req.body.fname;
-      users.lname = req.body.lName;
-      users.email = req.body.email;
-      users.phoneNo = req.body.phoneNo;
+      users.fname = normalizedFname;
+      users.lname = normalizedLname;
+      users.email = normalizedEmail;
+      users.phoneNo = normalizedPhone;
       users.state = req.body.state;
       users.city = req.body.city;
       users.pincode = req.body.pincode;
