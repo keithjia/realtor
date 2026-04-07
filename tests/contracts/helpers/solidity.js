@@ -5,11 +5,25 @@ const solc = require("solc");
 const { ethers } = require("ethers");
 
 const CONTRACTS_DIR = path.resolve(__dirname, "../../../contracts");
+const FIXTURES_DIR = path.resolve(__dirname, "../fixtures");
 
 let compiledContracts;
 
-const getSource = (fileName) =>
-  fs.readFileSync(path.join(CONTRACTS_DIR, fileName), "utf8");
+const readSoliditySources = (directory) => {
+  if (!fs.existsSync(directory)) {
+    return {};
+  }
+
+  return fs
+    .readdirSync(directory)
+    .filter((fileName) => fileName.endsWith(".sol"))
+    .reduce((sources, fileName) => {
+      sources[fileName] = {
+        content: fs.readFileSync(path.join(directory, fileName), "utf8"),
+      };
+      return sources;
+    }, {});
+};
 
 const compileContracts = () => {
   if (compiledContracts) {
@@ -19,8 +33,8 @@ const compileContracts = () => {
   const input = {
     language: "Solidity",
     sources: {
-      "HomeTransaction.sol": { content: getSource("HomeTransaction.sol") },
-      "Factory.sol": { content: getSource("Factory.sol") },
+      ...readSoliditySources(CONTRACTS_DIR),
+      ...readSoliditySources(FIXTURES_DIR),
     },
     settings: {
       outputSelection: {

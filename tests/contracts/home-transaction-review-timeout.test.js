@@ -39,6 +39,17 @@ describe("HomeTransaction realtor-review timeout regressions", () => {
     await (await contract.connect(buyer).anyWithdrawFromTransaction()).wait();
 
     assert.strictEqual((await contract.contractState()).toString(), "5");
+    assert.strictEqual(
+      (await contract.pendingWithdrawals(await buyer.getAddress())).toString(),
+      "10"
+    );
+
+    await (await contract.connect(buyer).withdrawPayout()).wait();
+
+    assert.strictEqual(
+      (await contract.pendingWithdrawals(await buyer.getAddress())).toString(),
+      "0"
+    );
     assert.strictEqual((await provider.getBalance(contract.address)).toString(), "0");
   });
 });

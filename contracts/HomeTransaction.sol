@@ -4,6 +4,7 @@ contract HomeTransaction {
     // Constants
     uint constant timeBetweenDepositAndFinalization = 5 minutes;
     uint constant depositPercentage = 10;
+    mapping(address => uint) public pendingWithdrawals;
 
     enum ContractState {
         WaitingSellerSignature,
@@ -90,7 +91,7 @@ contract HomeTransaction {
             closingConditionsReview = ClosingConditionsReview.Rejected;
             contractState = ContractState.Rejected;
 
-            buyer.transfer(deposit);
+            _creditPayout(buyer, deposit);
         }
     }
 
@@ -104,8 +105,8 @@ contract HomeTransaction {
 
         contractState = ContractState.Finalized;
 
-        seller.transfer(price-realtorFee);
-        realtor.transfer(realtorFee);
+        _creditPayout(seller, price-realtorFee);
+        _creditPayout(realtor, realtorFee);
     }
 
     function anyWithdrawFromTransaction() public {
@@ -119,10 +120,24 @@ contract HomeTransaction {
         contractState = ContractState.Rejected;
 
         if (closingConditionsReview == ClosingConditionsReview.Pending) {
-            buyer.transfer(deposit);
+            _creditPayout(buyer, deposit);
         } else {
-            seller.transfer(deposit-realtorFee);
-            realtor.transfer(realtorFee);
+            _creditPayout(seller, deposit-realtorFee);
+            _creditPayout(realtor, realtorFee);
         }
+    }
+
+    function withdrawPayout() public {
+        uint amount = pendingWithdrawals[msg.sender];
+        require(amount > 0, "No payout available");
+
+        pendingWithdrawals[msg.sender] = 0;
+
+        (bool success, ) = msg.sender.call.value(amount)("");
+        require(success, "Withdrawal failed");
+    }
+
+    function _creditPayout(address payable recipient, uint amount) internal {
+        pendingWithdrawals[recipient] += amount;
     }
 }
