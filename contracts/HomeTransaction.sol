@@ -1,6 +1,36 @@
 pragma solidity >=0.4.25 <0.6.0;
 
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+        return c;
+    }
+
+    function sub(uint a, uint b) internal pure returns (uint) {
+        require(b <= a, "SafeMath: subtraction overflow");
+        return a - b;
+    }
+
+    function mul(uint a, uint b) internal pure returns (uint) {
+        if (a == 0) {
+            return 0;
+        }
+
+        uint c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+        return c;
+    }
+
+    function div(uint a, uint b) internal pure returns (uint) {
+        require(b > 0, "SafeMath: division by zero");
+        return a / b;
+    }
+}
+
 contract HomeTransaction {
+    using SafeMath for uint;
+
     // Constants
     uint constant timeBetweenDepositAndFinalization = 5 minutes;
     uint constant depositPercentage = 10;
@@ -46,7 +76,11 @@ contract HomeTransaction {
         address payable _seller,
         address payable _buyer) public {
         require(_price >= _realtorFee, "Price needs to be more than realtor fee!");
-        require(_price * depositPercentage / 100 >= _realtorFee, "Minimum buyer deposit must cover realtor fee");
+        // Use checked arithmetic because this contract still targets Solidity 0.5.x.
+        require(
+            _price.mul(depositPercentage).div(100) >= _realtorFee,
+            "Minimum buyer deposit must cover realtor fee"
+        );
 
         realtor = _realtor;
         seller = _seller;
@@ -71,12 +105,15 @@ contract HomeTransaction {
 
         require(contractState == ContractState.WaitingBuyerSignature, "Wrong contract state");
 
-        require(msg.value >= price*depositPercentage/100 && msg.value <= price, "Buyer needs to deposit between 10% and 100% to sign contract");
+        require(
+            msg.value >= price.mul(depositPercentage).div(100) && msg.value <= price,
+            "Buyer needs to deposit between 10% and 100% to sign contract"
+        );
 
         contractState = ContractState.WaitingRealtorReview;
 
         deposit = msg.value;
-        finalizeDeadline = now + timeBetweenDepositAndFinalization;
+        finalizeDeadline = now.add(timeBetweenDepositAndFinalization);
     }
 
     function realtorReviewedClosingConditions(bool accepted) public {
@@ -101,7 +138,7 @@ contract HomeTransaction {
         require(contractState == ContractState.WaitingFinalization, "Wrong contract state");
         require(now <= finalizeDeadline, "Finalization deadline has expired");
 
-        require(msg.value + deposit == price, "Buyer needs to pay the rest of the cost to finalize transaction");
+        require(msg.value.add(deposit) == price, "Buyer needs to pay the rest of the cost to finalize transaction");
 
         contractState = ContractState.Finalized;
 
@@ -122,7 +159,7 @@ contract HomeTransaction {
         if (closingConditionsReview == ClosingConditionsReview.Pending) {
             _creditPayout(buyer, deposit);
         } else {
-            _creditPayout(seller, deposit-realtorFee);
+            _creditPayout(seller, deposit.sub(realtorFee));
             _creditPayout(realtor, realtorFee);
         }
     }
@@ -138,6 +175,7 @@ contract HomeTransaction {
     }
 
     function _creditPayout(address payable recipient, uint amount) internal {
-        pendingWithdrawals[recipient] += amount;
+        // Pending payouts are accumulated across settlement paths, so use checked addition.
+        pendingWithdrawals[recipient] = pendingWithdrawals[recipient].add(amount);
     }
 }
