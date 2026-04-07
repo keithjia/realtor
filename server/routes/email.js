@@ -2,14 +2,21 @@ const express = require('express');
 const router = express.Router();
 const helpers = require('../providers/helper');
 const { requireAdmin } = require('../middleware/auth');
+const { createRateLimiter } = require('../middleware/rateLimit');
 
 const sgMail = require('@sendgrid/mail');
+
+const emailRateLimit = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 3,
+  message: 'Too many email requests'
+});
 
 const sendEmail = (data) => {
   return sgMail.send(data)
 }
 
-router.post('/github-pages', requireAdmin, (req, res) => {
+router.post('/github-pages', requireAdmin, emailRateLimit, (req, res) => {
   let errorMessage = ''
   const checkMissingKey = helpers.isKeyMissing(req.body, ['toEmail', 'fromEmail', 'name', 'email', 'message']);
 
