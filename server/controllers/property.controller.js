@@ -7,6 +7,8 @@ var Property = require('../models/property');
 
 var gfs;
 var conn = mongoose.connection;
+const PUBLIC_PROPERTY_FIELDS = '-email -phoneNo -userId';
+
 conn.on('connected', () => {
   gfs = Grid(conn.db, mongoose.mongo);
   gfs.collection('imageMeta');
@@ -16,7 +18,7 @@ module.exports = {
   propertyTypeList: (req, res) => {
     propertyType.find({ is_active: true }, (err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to fetch property types' });
       else
         res.status(200).json(result);
     });
@@ -30,7 +32,7 @@ module.exports = {
 
     proptyp.save((err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to add property type' });
       else
         res.status(200).json({ message: 'Property type added successfully', id: result._id });
     });
@@ -38,11 +40,27 @@ module.exports = {
   addNewProperty: async (req, res) => {
     let imgs = [];
     try {
-      if (req.files && req.files.length)
+      const imageStore = req.gfs || gfs;
+
+      if (!req.user || !req.user._id) {
+        throw new Error('Authenticated user is required');
+      }
+
+      if (req.files && req.files.length) {
+        if (!imageStore) {
+          throw new Error('Image storage backend is not available');
+        }
+
+        if (req.files.some((file) => !file.filename)) {
+          throw new Error('Uploaded images could not be persisted');
+        }
+
         req.files.forEach(ele => imgs.push(ele.filename))
+      }
       var slug = await helpers.slugGenerator(req.body.title, 'title', 'property');
       req.body.slug = slug;
       req.body.type = req.body.Proptype;
+      req.body.userId = req.user._id;
       req.body.cornrPlot = req.body.cornrPlot ? true : false;
       req.body.images = imgs;
       req.body.imgPath = 'properties';
@@ -58,32 +76,44 @@ module.exports = {
       else throw new Error('Something Went Wrong');
     }
     catch (err) {
-      console.log({ err });
-      res.status(400).json({ message: err.message });
+      if (err && err.code === 11000 && err.keyPattern && err.keyPattern.slug) {
+        return res.status(409).json({ message: 'A property with this slug already exists' });
+      }
+
+      return res.status(400).json({ message: err.message });
     }
   },
   getUserList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     Property.find({ isActive: true, userId: req.params.userId })
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch user properties' });
         else
           res.status(200).json(result);
       });
   },
   getSingleProperty: async (req, res) => {
     try {
+      const imageStore = req.gfs || gfs;
       var result = await Property.findOne({ slug: req.params.propertySlug })
+        .select(PUBLIC_PROPERTY_FIELDS)
         .populate('city', 'name')
         .populate('state', 'name')
         .populate('type', 'title');
 
       var files = [];
       if (result && result.images.length) {
-        files = await gfs.files.find({ filename: { $in: result.images } }).toArray();
+        if (!imageStore) {
+          throw new Error('Image storage backend is not available');
+        }
+
+        files = await imageStore.files.find({ filename: { $in: result.images } }).toArray();
       }
       if (result) res.status(200).json({ result, files });
       else throw new Error('Something Went Wrong');
@@ -94,14 +124,17 @@ module.exports = {
 
   },
   getFullList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     Property.find({ isActive: true })
+      .select(PUBLIC_PROPERTY_FIELDS)
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
-      .populate('userId', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch properties' });
         else
           res.status(200).json(result);
       });
@@ -109,7 +142,6 @@ module.exports = {
   markAsSold: async (req, res) => {
     try {
       const result = await Property.update({ slug: req.params.propertySlug }, { status: req.body.status });
-      console.log({ result });
       if (result && result.nModified == 1) res.status(200).json({ result, message: "Property has been updated Successfully" });
       else throw new Error('Error in updating property');
     }
@@ -118,6 +150,7 @@ module.exports = {
     }
   },
   filterProperties: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     var query = {};
     if (req.query.propertyFor)
       query['propertyFor'] = { $in: req.query.propertyFor.split(",") }
@@ -131,33 +164,41 @@ module.exports = {
       query['userId'] = { $ne: req.query.notUserId }
     if (req.query.status)
       query['status'] = { $in: req.query.status.split(",") }
-    console.log({ query });
     Property.find(query)
+      .select(PUBLIC_PROPERTY_FIELDS)
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
-      .populate('userId', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to filter properties' });
         else
           res.status(200).json(result);
       });
   },
   testController: async (req, res) => {
     const testData = await Property.find({ updatedOn: { $gte: '2019-04-01' } })
-    console.log({ testData });
     return res.send(testData);
   },
   showGFSImage: (req, res) => {
-    gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+    const imageStore = req.gfs || gfs;
+
+    if (!imageStore) {
+      return res.status(503).json({
+        err: 'Image storage backend is not available'
+      });
+    }
+
+    imageStore.files.findOne({ filename: req.params.filename }, (err, file) => {
       if (!file || file.length === 0) {
         return res.status(404).json({
           err: 'No file exists'
         });
       }
       if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
-        const readstream = gfs.createReadStream(file.filename);
+        const readstream = imageStore.createReadStream(file.filename);
         readstream.pipe(res);
       } else {
         res.status(404).json({

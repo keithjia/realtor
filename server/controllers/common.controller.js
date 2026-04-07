@@ -2,14 +2,15 @@ const mongoose = require('mongoose');
 var state_model = require('../models/state');
 var city_model = require('../models/city');
 var users = require('../models/users');
+const helpers = require('../providers/helper');
 
 module.exports = {
   getStateList: (req, res) => {
     state_model.find({ is_active: true })
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).send(data);
+          return res.status(400).json({ message: 'Unable to fetch states' });
+        return res.status(200).send(data);
       });
   },
   addState: (req, res) => {
@@ -18,33 +19,38 @@ module.exports = {
 
     state.save((err) => {
       if (err)
-        res.send(err);
-      res.json({ message: 'State added successfully' });
+        return res.status(400).json({ message: 'Unable to add state' });
+      return res.json({ message: 'State added successfully' });
     })
   },
   getAllCities: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     city_model.find({ is_active: true })
       .populate('state_id', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).json(data);
+          return res.status(400).json({ message: 'Unable to fetch cities' });
+        return res.status(200).json(data);
       });
   },
   getCityList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     city_model.find({ state_id: req.params.state_id, is_active: true })
       .populate('state_id', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).json(data);
+          return res.status(400).json({ message: 'Unable to fetch cities for state' });
+        return res.status(200).json(data);
       });
   },
   addCity: async (req, res) => {
     try {
       var city = new city_model(req.body);
       const result = await city.save();
-      console.log({ result });
       if (result) res.status(200).json({ message: 'City added successfully' });
       else throw new Error('Something Went Wrong');
     }
@@ -55,8 +61,8 @@ module.exports = {
   removeCity: (req, res) => {
     city_model.remove({ _id: req.params.cityId }, (err, result) => {
       if (err)
-        res.status(400).send(err);
-      res.status(200).json({ message: 'City removed successfully', data: result });
+        return res.status(400).json({ message: 'Unable to remove city' });
+      return res.status(200).json({ message: 'City removed successfully', data: result });
     })
   },
   checkemailAvailability: (req, res) => {
@@ -64,7 +70,7 @@ module.exports = {
 
     users.find({ email: email }, (err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to check email availability' });
       else if (result.length > 0)
         res.status(200).json({ response: true });
       else

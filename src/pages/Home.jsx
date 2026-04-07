@@ -8,6 +8,9 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 function Home() {
   const [openSections, setOpenSections] = useState({});
+  const propertyPlaceholder = '/placeholders/property-card.svg';
+  const blogPlaceholder = '/placeholders/blog-card.svg';
+  const heroPlaceholder = '/placeholders/hero-property.svg';
 
   const featuredProperties = [
     {
@@ -18,7 +21,7 @@ function Home() {
         eth: 425, // Example ETH value
       },
       location: 'Miami, FL',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+      image: propertyPlaceholder,
       roi: '7.2% Annual',
       metrics: {
         totalInvestors: 142,
@@ -35,7 +38,7 @@ function Home() {
         eth: 600,
       },
       location: 'Austin, TX',
-      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+      image: propertyPlaceholder,
       roi: '6.8% Annual',
       metrics: {
         totalInvestors: 203,
@@ -52,7 +55,7 @@ function Home() {
         eth: 1050,
       },
       location: 'Seattle, WA',
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+      image: propertyPlaceholder,
       roi: '7.5% Annual',
       metrics: {
         totalInvestors: 89,
@@ -147,7 +150,7 @@ function Home() {
       title: 'The Future of Real Estate: Cryptocurrency Payments and Blockchain Technology',
       slug: 'future-real-estate-crypto-payments',
       excerpt: 'Explore how cryptocurrency and blockchain are revolutionizing property transactions and investment opportunities.',
-      image: 'https://images.unsplash.com/photo-1516245834210-c4c142787335?w=800&q=80',
+      image: blogPlaceholder,
       category: 'crypto',
       author: 'Sarah Johnson',
       date: '2024-03-15',
@@ -158,7 +161,7 @@ function Home() {
       title: 'Understanding Tokenized Real Estate Investment',
       slug: 'understanding-tokenized-real-estate',
       excerpt: "A comprehensive guide to property tokenization and how it's making real estate investment more accessible.",
-      image: 'https://images.unsplash.com/photo-1460472178825-e5240623afd5?w=800&q=80',
+      image: blogPlaceholder,
       category: 'investment',
       author: 'Michael Chen',
       date: '2024-03-12',
@@ -169,7 +172,7 @@ function Home() {
       title: 'Smart Contracts in Real Estate Transactions',
       slug: 'smart-contracts-real-estate',
       excerpt: 'How smart contracts are streamlining property transactions and reducing costs.',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80',
+      image: blogPlaceholder,
       category: 'technology',
       author: 'David Rodriguez',
       date: '2024-03-10',
@@ -218,7 +221,7 @@ function Home() {
       <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80"
+            src={heroPlaceholder}
             alt="Hero background"
             className="w-full h-full object-cover"
           />

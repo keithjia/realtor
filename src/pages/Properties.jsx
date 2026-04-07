@@ -6,6 +6,7 @@ import { FaEthereum } from 'react-icons/fa';
 
 function Properties() {
   const [showFilters, setShowFilters] = useState(false);
+  const propertyPlaceholder = '/placeholders/property-card.svg';
   const [filters, setFilters] = useState({
     priceRange: 'all',
     propertyType: 'all',
@@ -25,7 +26,7 @@ function Properties() {
         eth: 425
       },
       location: 'Beverly Hills, CA',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+      image: propertyPlaceholder,
       type: 'villa',
       roi: '7.2%',
       metrics: {
@@ -51,7 +52,7 @@ function Properties() {
         eth: 600
       },
       location: 'Manhattan, NY',
-      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+      image: propertyPlaceholder,
       type: 'apartment',
       roi: '6.8%',
       metrics: {
@@ -77,7 +78,7 @@ function Properties() {
         eth: 1050
       },
       location: 'Miami Beach, FL',
-      image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
+      image: propertyPlaceholder,
       type: 'house',
       roi: '7.5%',
       metrics: {
@@ -103,7 +104,7 @@ function Properties() {
         eth: 475
       },
       location: 'Austin, TX',
-      image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
+      image: propertyPlaceholder,
       type: 'house',
       roi: '8.1%',
       metrics: {

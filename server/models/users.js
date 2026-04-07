@@ -22,7 +22,8 @@ userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    select: false
   },
   state: {
     type: Schema.Types.ObjectId,
