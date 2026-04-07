@@ -70,9 +70,11 @@ describe("common controller error flow regressions", () => {
     commonController.getStateList({}, res);
 
     assert.strictEqual(res.statusCode, 400);
-    assert.strictEqual(res.sendCalls, 1);
-    assert.strictEqual(res.sent, expectedError);
-    assert.strictEqual(res.jsonCalls, 0);
+    assert.strictEqual(res.sendCalls, 0);
+    assert.strictEqual(res.jsonCalls, 1);
+    assert.deepStrictEqual(res.jsonBody, {
+      message: 'Unable to fetch states'
+    });
   });
 
   it("does not send a success response after getAllCities errors", () => {
@@ -107,9 +109,11 @@ describe("common controller error flow regressions", () => {
     commonController.getAllCities({}, res);
 
     assert.strictEqual(res.statusCode, 400);
-    assert.strictEqual(res.sendCalls, 1);
-    assert.strictEqual(res.sent, expectedError);
-    assert.strictEqual(res.jsonCalls, 0);
+    assert.strictEqual(res.sendCalls, 0);
+    assert.strictEqual(res.jsonCalls, 1);
+    assert.deepStrictEqual(res.jsonBody, {
+      message: 'Unable to fetch cities'
+    });
   });
 
   it("does not send a success response after getCityList errors", () => {
@@ -144,9 +148,11 @@ describe("common controller error flow regressions", () => {
     commonController.getCityList({ params: { state_id: "state-1" } }, res);
 
     assert.strictEqual(res.statusCode, 400);
-    assert.strictEqual(res.sendCalls, 1);
-    assert.strictEqual(res.sent, expectedError);
-    assert.strictEqual(res.jsonCalls, 0);
+    assert.strictEqual(res.sendCalls, 0);
+    assert.strictEqual(res.jsonCalls, 1);
+    assert.deepStrictEqual(res.jsonBody, {
+      message: 'Unable to fetch cities for state'
+    });
   });
 
   it("does not send a success response after removeCity errors", () => {
@@ -168,8 +174,10 @@ describe("common controller error flow regressions", () => {
     commonController.removeCity({ params: { cityId: "city-1" } }, res);
 
     assert.strictEqual(res.statusCode, 400);
-    assert.strictEqual(res.sendCalls, 1);
-    assert.strictEqual(res.sent, expectedError);
-    assert.strictEqual(res.jsonCalls, 0);
+    assert.strictEqual(res.sendCalls, 0);
+    assert.strictEqual(res.jsonCalls, 1);
+    assert.deepStrictEqual(res.jsonBody, {
+      message: 'Unable to remove city'
+    });
   });
 });

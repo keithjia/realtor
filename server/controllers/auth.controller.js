@@ -57,7 +57,7 @@ module.exports = {
         .status(200)
         .json({ message: "Login Successful", token: token });
     } catch (err) {
-      return res.status(400).send(err);
+      return res.status(400).json({ message: "Unable to process login request" });
     }
   },
   userRegistration: async (req, res) => {
@@ -80,7 +80,7 @@ module.exports = {
         .status(200)
         .json({ message: "User Added Successfully", id: data._id });
     } catch (err) {
-      return res.status(400).send(err);
+      return res.status(400).json({ message: "Unable to register user" });
     }
   },
   userList: async (req, res) => {
@@ -89,7 +89,7 @@ module.exports = {
       const data = await userM.find().select("-password").limit(limit).skip(skip);
       return res.status(200).json({ message: "Success", data });
     } catch (err) {
-      return res.status(400).json({ message: "Something Went Wrong", data: err });
+      return res.status(400).json({ message: "Unable to fetch user list" });
     }
   },
   changePass: async (req, res) => {
@@ -122,7 +122,7 @@ module.exports = {
           id: resp
         });
     } catch (err) {
-      return res.status(400).json({ message: "Something Went Wrong", data: err });
+      return res.status(400).json({ message: "Unable to change password" });
     }
   }
 };

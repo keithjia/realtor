@@ -18,7 +18,7 @@ module.exports = {
       
       return res.status(200).send(result);
     } catch (err) {
-      return res.status(400).send(err);
+      return res.status(400).json({ message: 'Unable to fetch user details' });
     }
   }
 }

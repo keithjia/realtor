@@ -46,7 +46,7 @@ router.post('/github-pages', requireAuth, (req, res) => {
       res.status(200).json({ message: 'Email sent successfully' })
     })
     .catch((err) => {
-      res.status(400).send(err)
+      res.status(400).json({ message: 'Unable to send email' })
     })
 })
 

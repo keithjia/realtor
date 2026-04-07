@@ -16,7 +16,7 @@ module.exports = {
   propertyTypeList: (req, res) => {
     propertyType.find({ is_active: true }, (err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to fetch property types' });
       else
         res.status(200).json(result);
     });
@@ -30,7 +30,7 @@ module.exports = {
 
     proptyp.save((err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to add property type' });
       else
         res.status(200).json({ message: 'Property type added successfully', id: result._id });
     });
@@ -89,7 +89,7 @@ module.exports = {
       .populate('type', 'title')
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch user properties' });
         else
           res.status(200).json(result);
       });
@@ -129,7 +129,7 @@ module.exports = {
       .skip(skip)
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch properties' });
         else
           res.status(200).json(result);
       });
@@ -170,7 +170,7 @@ module.exports = {
       .skip(skip)
       .exec((err, result) => {
         if (err)
-          res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to filter properties' });
         else
           res.status(200).json(result);
       });

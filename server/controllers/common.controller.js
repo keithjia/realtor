@@ -9,7 +9,7 @@ module.exports = {
     state_model.find({ is_active: true })
       .exec((err, data) => {
         if (err)
-          return res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch states' });
         return res.status(200).send(data);
       });
   },
@@ -19,7 +19,7 @@ module.exports = {
 
     state.save((err) => {
       if (err)
-        return res.send(err);
+        return res.status(400).json({ message: 'Unable to add state' });
       return res.json({ message: 'State added successfully' });
     })
   },
@@ -31,7 +31,7 @@ module.exports = {
       .skip(skip)
       .exec((err, data) => {
         if (err)
-          return res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch cities' });
         return res.status(200).json(data);
       });
   },
@@ -40,7 +40,7 @@ module.exports = {
       .populate('state_id', 'name')
       .exec((err, data) => {
         if (err)
-          return res.status(400).send(err);
+          return res.status(400).json({ message: 'Unable to fetch cities for state' });
         return res.status(200).json(data);
       });
   },
@@ -59,7 +59,7 @@ module.exports = {
   removeCity: (req, res) => {
     city_model.remove({ _id: req.params.cityId }, (err, result) => {
       if (err)
-        return res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to remove city' });
       return res.status(200).json({ message: 'City removed successfully', data: result });
     })
   },
@@ -68,7 +68,7 @@ module.exports = {
 
     users.find({ email: email }, (err, result) => {
       if (err)
-        res.status(400).send(err);
+        return res.status(400).json({ message: 'Unable to check email availability' });
       else if (result.length > 0)
         res.status(200).json({ response: true });
       else
