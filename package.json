@@ -56,7 +56,8 @@
     "server": "node server/app.js",
     "client": "react-app-rewired start",
     "build": "react-app-rewired build",
-    "test": "react-app-rewired test",
+    "test": "mocha \"tests/**/*.test.js\"",
+    "test:client": "react-app-rewired test",
     "eject": "echo \"Not Support eject\""
   },
   "eslintConfig": {
@@ -79,6 +80,7 @@
   },
   "devDependencies": {
     "typescript": "^5.8.3",
+    "mocha": "^10.8.2",
     "assert": "^2.0.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",

