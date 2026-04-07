@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Hero property placeholder</title>
+  <desc id="desc">Abstract property skyline illustration for hero banner</desc>
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#081c2c" />
+      <stop offset="100%" stop-color="#1d5f8f" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)" />
+  <circle cx="1240" cy="175" r="84" fill="#ffd166" />
+  <path d="M0 690 250 520l170 95 255-220 230 160 180-120 265 255v210H0Z" fill="#102a43" />
+  <path d="M210 900V640h180v260Zm355 0V575h170v325Zm330 0V625h130v275Zm250 0V565h160v335Z" fill="#dbe9f4" opacity="0.9" />
+</svg>

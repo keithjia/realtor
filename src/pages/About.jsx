@@ -4,6 +4,7 @@ import { FaBitcoin, FaEthereum, FaHandshake } from 'react-icons/fa';
 import { SiChainlink } from 'react-icons/si';
 
 function About() {
+  const personPlaceholder = '/placeholders/person-card.svg';
   const stats = [
     {
       value: '$250M+',
@@ -31,25 +32,25 @@ function About() {
     {
       name: 'Lorem Ipsum',
       role: 'Lorem Ipsum',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      image: personPlaceholder,
       bio: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi amet debiti'
     },
     {
       name: 'Lorem Ipsum',
       role: 'Lorem Ipsum',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      image: personPlaceholder,
       bio: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi amet debiti'
     },
     {
       name: 'Lorem Ipsum',
       role: 'Lorem Ipsum',
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+      image: personPlaceholder,
       bio: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi amet debiti'
     },
     {
       name: 'Lorem Ipsum',
       role: 'Lorem Ipsum',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+      image: personPlaceholder,
       bio: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Commodi amet debiti'
     }
   ];

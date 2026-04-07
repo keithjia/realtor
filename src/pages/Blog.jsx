@@ -6,6 +6,7 @@ import { FiSearch, FiClock, FiUser } from 'react-icons/fi';
 function Blog() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const blogPlaceholder = '/placeholders/blog-card.svg';
 
   const categories = [
     { id: 'all', name: 'All Posts' },
@@ -22,7 +23,7 @@ function Blog() {
       title: 'The Future of Real Estate: Cryptocurrency Payments and Blockchain Technology',
       slug: 'future-real-estate-crypto-payments',
       excerpt: 'Explore how cryptocurrency and blockchain are revolutionizing property transactions and investment opportunities.',
-      image: 'https://images.unsplash.com/photo-1516245834210-c4c142787335?w=800&q=80',
+      image: blogPlaceholder,
       category: 'crypto',
       author: 'Sarah Johnson',
       date: '2024-03-15',
@@ -33,7 +34,7 @@ function Blog() {
       title: 'Understanding Tokenized Real Estate Investment',
       slug: 'understanding-tokenized-real-estate',
       excerpt: "A comprehensive guide to property tokenization and how it's making real estate investment more accessible.",
-      image: 'https://images.unsplash.com/photo-1460472178825-e5240623afd5?w=800&q=80',
+      image: blogPlaceholder,
       category: 'investment',
       author: 'Michael Chen',
       date: '2024-03-12',
@@ -44,7 +45,7 @@ function Blog() {
       title: 'Smart Contracts in Real Estate Transactions',
       slug: 'smart-contracts-real-estate',
       excerpt: 'How smart contracts are streamlining property transactions and reducing costs.',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80',
+      image: blogPlaceholder,
       category: 'technology',
       author: 'David Rodriguez',
       date: '2024-03-10',
@@ -55,7 +56,7 @@ function Blog() {
       title: '2024 Real Estate Market Analysis: Crypto Impact',
       slug: '2024-market-analysis-crypto',
       excerpt: 'Analysis of how cryptocurrency adoption is affecting real estate market dynamics.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+      image: blogPlaceholder,
       category: 'market',
       author: 'Emma Wilson',
       date: '2024-03-08',
@@ -66,7 +67,7 @@ function Blog() {
       title: 'Property Investment Strategies with Cryptocurrency',
       slug: 'property-investment-strategies-crypto',
       excerpt: 'Learn effective strategies for investing in real estate using cryptocurrency.',
-      image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80',
+      image: blogPlaceholder,
       category: 'investment',
       author: 'Sarah Johnson',
       date: '2024-03-05',
@@ -77,7 +78,7 @@ function Blog() {
       title: 'Regulatory Landscape: Crypto in Real Estate',
       slug: 'regulatory-landscape-crypto-real-estate',
       excerpt: 'Understanding the current regulatory environment for cryptocurrency-based property transactions.',
-      image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80',
+      image: blogPlaceholder,
       category: 'crypto',
       author: 'Michael Chen',
       date: '2024-03-02',

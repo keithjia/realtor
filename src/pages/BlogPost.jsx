@@ -4,43 +4,55 @@ import { FiClock, FiUser, FiCalendar, FiShare2, FiArrowLeft, FiTag } from 'react
 import { FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
 function BlogPost() {
+  const blogSections = [
+    {
+      heading: 'The Rise of Crypto in Real Estate',
+      paragraphs: [
+        'Cryptocurrency is increasingly being accepted in real estate transactions, offering several advantages:'
+      ],
+      items: [
+        'Faster transaction processing',
+        'Lower transaction fees',
+        'Enhanced security through blockchain technology',
+        'Access to global investment opportunities'
+      ]
+    },
+    {
+      heading: "Blockchain's Impact on Property Transactions",
+      paragraphs: [
+        'Blockchain technology is revolutionizing property transactions in several ways:'
+      ],
+      ordered: true,
+      items: [
+        'Smart Contracts: Automating and securing transaction processes',
+        'Property Records: Creating immutable records of ownership',
+        'Tokenization: Enabling fractional property ownership',
+        'Transparency: Providing clear transaction histories'
+      ]
+    },
+    {
+      heading: 'The Future Outlook',
+      paragraphs: [
+        'As we look to the future, several trends are emerging:'
+      ],
+      items: [
+        'Increased adoption of cryptocurrency payments in real estate',
+        'More platforms offering tokenized property investments',
+        'Integration of smart contracts in property transactions',
+        'Enhanced security measures for digital real estate transactions'
+      ]
+    },
+    {
+      heading: 'Conclusion',
+      paragraphs: [
+        "The integration of cryptocurrency and blockchain in real estate is not just a trend; it is the future of property transactions. As these technologies continue to evolve, we can expect to see more innovative solutions that make real estate investment more accessible, secure, and efficient."
+      ]
+    }
+  ];
 
   const post = {
     title: 'The Future of Real Estate: Cryptocurrency Payments and Blockchain Technology',
-    content: `
-      <p class="mb-4">The real estate industry is undergoing a revolutionary transformation with the integration of cryptocurrency payments and blockchain technology. This shift is not just about adding another payment method – it's about fundamentally changing how property transactions are conducted, recorded, and verified.</p>
-
-      <h2 class="text-2xl font-semibold mt-8 mb-4">The Rise of Crypto in Real Estate</h2>
-      <p class="mb-4">Cryptocurrency is increasingly being accepted in real estate transactions, offering several advantages:</p>
-      <ul class="list-disc pl-6 mb-4">
-        <li class="mb-2">Faster transaction processing</li>
-        <li class="mb-2">Lower transaction fees</li>
-        <li class="mb-2">Enhanced security through blockchain technology</li>
-        <li class="mb-2">Access to global investment opportunities</li>
-      </ul>
-
-      <h2 class="text-2xl font-semibold mt-8 mb-4">Blockchain's Impact on Property Transactions</h2>
-      <p class="mb-4">Blockchain technology is revolutionizing property transactions in several ways:</p>
-      <ol class="list-decimal pl-6 mb-4">
-        <li class="mb-2">Smart Contracts: Automating and securing transaction processes</li>
-        <li class="mb-2">Property Records: Creating immutable records of ownership</li>
-        <li class="mb-2">Tokenization: Enabling fractional property ownership</li>
-        <li class="mb-2">Transparency: Providing clear transaction histories</li>
-      </ol>
-
-      <h2 class="text-2xl font-semibold mt-8 mb-4">The Future Outlook</h2>
-      <p class="mb-4">As we look to the future, several trends are emerging:</p>
-      <ul class="list-disc pl-6 mb-4">
-        <li class="mb-2">Increased adoption of cryptocurrency payments in real estate</li>
-        <li class="mb-2">More platforms offering tokenized property investments</li>
-        <li class="mb-2">Integration of smart contracts in property transactions</li>
-        <li class="mb-2">Enhanced security measures for digital real estate transactions</li>
-      </ul>
-
-      <h2 class="text-2xl font-semibold mt-8 mb-4">Conclusion</h2>
-      <p class="mb-4">The integration of cryptocurrency and blockchain in real estate is not just a trend – it's the future of property transactions. As these technologies continue to evolve, we can expect to see more innovative solutions that make real estate investment more accessible, secure, and efficient.</p>
-    `,
-    image: 'https://images.unsplash.com/photo-1516245834210-c4c142787335?w=1200&q=80',
+    image: '/placeholders/blog-card.svg',
     author: 'Sarah Johnson',
     date: '2024-03-15',
     readTime: '5 min read',
@@ -50,7 +62,6 @@ function BlogPost() {
 
   return (
     <div className="min-h-screen bg-secondary-50">
-      {/* Hero Section */}
       <div className="relative h-[400px]">
         <img
           src={post.image}
@@ -89,10 +100,8 @@ function BlogPost() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="container py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -100,21 +109,43 @@ function BlogPost() {
             className="lg:col-span-2"
           >
             <div className="bg-white rounded-lg shadow-md p-8">
-              <div 
-                className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
+              <div className="prose prose-lg max-w-none">
+                <p className="mb-4">
+                  The real estate industry is undergoing a revolutionary transformation with the integration of cryptocurrency payments and blockchain technology. This shift is not just about adding another payment method; it is about fundamentally changing how property transactions are conducted, recorded, and verified.
+                </p>
+                {blogSections.map((section) => {
+                  const ListTag = section.ordered ? 'ol' : 'ul';
+
+                  return (
+                    <section key={section.heading}>
+                      <h2 className="text-2xl font-semibold mt-8 mb-4">{section.heading}</h2>
+                      {section.paragraphs.map((paragraph) => (
+                        <p key={paragraph} className="mb-4">
+                          {paragraph}
+                        </p>
+                      ))}
+                      {section.items ? (
+                        <ListTag className={`${section.ordered ? 'list-decimal' : 'list-disc'} pl-6 mb-4`}>
+                          {section.items.map((item) => (
+                            <li key={item} className="mb-2">
+                              {item}
+                            </li>
+                          ))}
+                        </ListTag>
+                      ) : null}
+                    </section>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
 
-          {/* Sidebar */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
             <div className="space-y-6">
-              {/* Share */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <FiShare2 className="mr-2" />
@@ -133,7 +164,6 @@ function BlogPost() {
                 </div>
               </div>
 
-              {/* Tags */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center">
                   <FiTag className="mr-2" />

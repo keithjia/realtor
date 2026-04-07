@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Property placeholder</title>
+  <desc id="desc">Abstract illustration of a property card</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f4c81" />
+      <stop offset="100%" stop-color="#6ba7d6" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)" />
+  <rect x="130" y="230" width="940" height="430" rx="32" fill="#f4f7fb" opacity="0.95" />
+  <path d="M190 430 390 290l160 110 210-155 250 185v170H190Z" fill="#1e3a5f" />
+  <path d="M300 660V455h170v205Zm350 0V505h145v155Zm250 0V470h90v190Z" fill="#d8e6f2" />
+  <circle cx="955" cy="185" r="66" fill="#ffd166" opacity="0.9" />
+</svg>
