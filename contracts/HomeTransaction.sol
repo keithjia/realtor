@@ -75,6 +75,9 @@ contract HomeTransaction {
         address payable _realtor,
         address payable _seller,
         address payable _buyer) public {
+        require(_realtor != address(0) && _seller != address(0) && _buyer != address(0), "Role address cannot be zero");
+        // Each privileged actor needs an independent role to avoid self-dealing and broken settlement flows.
+        require(_realtor != _seller && _realtor != _buyer && _seller != _buyer, "Roles must be distinct");
         require(_price >= _realtorFee, "Price needs to be more than realtor fee!");
         // Use checked arithmetic because this contract still targets Solidity 0.5.x.
         require(

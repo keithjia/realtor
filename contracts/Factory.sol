@@ -13,6 +13,9 @@ contract Factory {
         uint _price,
         address payable _seller,
         address payable _buyer) public returns(HomeTransaction homeTransaction)  {
+    require(_seller != address(0) && _buyer != address(0), "Role address cannot be zero");
+    require(msg.sender != _seller && msg.sender != _buyer && _seller != _buyer, "Roles must be distinct");
+
     homeTransaction = new HomeTransaction(
       _address,
       _zip,
