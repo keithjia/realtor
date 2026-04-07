@@ -55,6 +55,12 @@ describe("password exposure regressions", () => {
           find: () => ({
             select(value) {
               selectArg = value;
+              return this;
+            },
+            limit() {
+              return this;
+            },
+            skip() {
               execCalled = true;
               return Promise.resolve([]);
             },

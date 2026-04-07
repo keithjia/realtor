@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 var state_model = require('../models/state');
 var city_model = require('../models/city');
 var users = require('../models/users');
+const helpers = require('../providers/helper');
 
 module.exports = {
   getStateList: (req, res) => {
@@ -23,8 +24,11 @@ module.exports = {
     })
   },
   getAllCities: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     city_model.find({ is_active: true })
       .populate('state_id', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, data) => {
         if (err)
           return res.status(400).send(err);

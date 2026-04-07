@@ -87,6 +87,12 @@ describe("common controller error flow regressions", () => {
               populate() {
                 return this;
               },
+              limit() {
+                return this;
+              },
+              skip() {
+                return this;
+              },
               exec(callback) {
                 callback(expectedError);
               },
@@ -116,6 +122,12 @@ describe("common controller error flow regressions", () => {
           find() {
             return {
               populate() {
+                return this;
+              },
+              limit() {
+                return this;
+              },
+              skip() {
                 return this;
               },
               exec(callback) {

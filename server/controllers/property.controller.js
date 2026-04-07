@@ -119,11 +119,14 @@ module.exports = {
 
   },
   getFullList: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     Property.find({ isActive: true })
       .populate('city', 'name')
       .populate('state', 'name')
       .populate('type', 'title')
       .populate('userId', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
           res.status(400).send(err);
@@ -143,6 +146,7 @@ module.exports = {
     }
   },
   filterProperties: (req, res) => {
+    const { limit, skip } = helpers.getPagination(req.query);
     var query = {};
     if (req.query.propertyFor)
       query['propertyFor'] = { $in: req.query.propertyFor.split(",") }
@@ -162,6 +166,8 @@ module.exports = {
       .populate('state', 'name')
       .populate('type', 'title')
       .populate('userId', 'name')
+      .limit(limit)
+      .skip(skip)
       .exec((err, result) => {
         if (err)
           res.status(400).send(err);

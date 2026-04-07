@@ -85,7 +85,8 @@ module.exports = {
   },
   userList: async (req, res) => {
     try {
-      const data = await userM.find().select("-password");
+      const { limit, skip } = require("../providers/helper").getPagination(req.query);
+      const data = await userM.find().select("-password").limit(limit).skip(skip);
       return res.status(200).json({ message: "Success", data });
     } catch (err) {
       return res.status(400).json({ message: "Something Went Wrong", data: err });
