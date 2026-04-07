@@ -50,7 +50,9 @@ describe("HomeTransaction payout recipient escape hatch regressions", () => {
     );
 
     const balanceBefore = await provider.getBalance(fallbackAddress);
-    await (await revertingSeller.connect(realtor).withdrawTo(contract.address, fallbackAddress)).wait();
+    const withdrawReceipt = await (
+      await revertingSeller.connect(realtor).withdrawTo(contract.address, fallbackAddress)
+    ).wait();
     const balanceAfter = await provider.getBalance(fallbackAddress);
 
     assert.strictEqual(
@@ -58,5 +60,18 @@ describe("HomeTransaction payout recipient escape hatch regressions", () => {
       "0"
     );
     assert.ok(balanceAfter.sub(balanceBefore).eq(ethers.BigNumber.from(95)));
+    const payoutEvents = await contract.queryFilter(
+      contract.filters.PayoutWithdrawn(),
+      withdrawReceipt.blockNumber,
+      withdrawReceipt.blockNumber
+    );
+    assert.ok(
+      payoutEvents.some(
+        (event) =>
+          String(event.args.owner).toLowerCase() === revertingSeller.address.toLowerCase() &&
+          String(event.args.recipient).toLowerCase() === fallbackAddress.toLowerCase() &&
+          event.args.amount.toString() === "95"
+      )
+    );
   });
 });

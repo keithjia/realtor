@@ -75,6 +75,7 @@ describe("HomeTransaction event emission regressions", () => {
       withdrawReceipt.events.some(
         (event) =>
           event.event === "PayoutWithdrawn" &&
+          event.args.owner === realtorAddress &&
           event.args.recipient === realtorAddress &&
           event.args.amount.toString() === "5"
       )

@@ -38,7 +38,7 @@ contract HomeTransaction {
     event TransactionFinalized(address indexed buyer, uint totalPrice);
     event TransactionRejected(address indexed triggeredBy, string reason);
     event PayoutCredited(address indexed recipient, uint amount);
-    event PayoutWithdrawn(address indexed recipient, uint amount);
+    event PayoutWithdrawn(address indexed owner, address indexed recipient, uint amount);
     event SurplusEtherRescued(address indexed operator, address indexed recipient, uint amount);
 
     // Constants
@@ -213,7 +213,7 @@ contract HomeTransaction {
         (bool success, ) = recipient.call.value(amount)("");
         require(success, "Withdrawal failed");
 
-        emit PayoutWithdrawn(recipient, amount);
+        emit PayoutWithdrawn(msg.sender, recipient, amount);
     }
 
     function rescueSurplusEther(address payable recipient) public {
