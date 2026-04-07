@@ -31,6 +31,15 @@ library SafeMath {
 contract HomeTransaction {
     using SafeMath for uint;
 
+    event TransactionCreated(address indexed realtor, address indexed seller, address indexed buyer, uint price, uint realtorFee);
+    event SellerSigned(address indexed seller);
+    event BuyerSignedAndDeposited(address indexed buyer, uint amount, uint finalizeDeadline);
+    event ClosingConditionsReviewed(address indexed realtor, bool accepted);
+    event TransactionFinalized(address indexed buyer, uint totalPrice);
+    event TransactionRejected(address indexed triggeredBy, string reason);
+    event PayoutCredited(address indexed recipient, uint amount);
+    event PayoutWithdrawn(address indexed recipient, uint amount);
+
     // Constants
     uint constant timeBetweenDepositAndFinalization = 5 minutes;
     uint constant depositPercentage = 10;
@@ -93,6 +102,8 @@ contract HomeTransaction {
         city = _city;
         price = _price;
         realtorFee = _realtorFee;
+
+        emit TransactionCreated(realtor, seller, buyer, price, realtorFee);
     }
 
     function sellerSignContract() public {
@@ -101,6 +112,8 @@ contract HomeTransaction {
         require(contractState == ContractState.WaitingSellerSignature, "Wrong contract state");
 
         contractState = ContractState.WaitingBuyerSignature;
+
+        emit SellerSigned(msg.sender);
     }
 
     function buyerSignContractAndPayDeposit() public payable {
@@ -117,6 +130,8 @@ contract HomeTransaction {
 
         deposit = msg.value;
         finalizeDeadline = now.add(timeBetweenDepositAndFinalization);
+
+        emit BuyerSignedAndDeposited(msg.sender, msg.value, finalizeDeadline);
     }
 
     function realtorReviewedClosingConditions(bool accepted) public {
@@ -132,7 +147,10 @@ contract HomeTransaction {
             contractState = ContractState.Rejected;
 
             _creditPayout(buyer, deposit);
+            emit TransactionRejected(msg.sender, "closing conditions rejected");
         }
+
+        emit ClosingConditionsReviewed(msg.sender, accepted);
     }
 
     function buyerFinalizeTransaction() public payable {
@@ -147,6 +165,8 @@ contract HomeTransaction {
 
         _creditPayout(seller, price-realtorFee);
         _creditPayout(realtor, realtorFee);
+
+        emit TransactionFinalized(msg.sender, price);
     }
 
     function anyWithdrawFromTransaction() public {
@@ -165,9 +185,11 @@ contract HomeTransaction {
 
         if (closingConditionsReview == ClosingConditionsReview.Pending) {
             _creditPayout(buyer, deposit);
+            emit TransactionRejected(msg.sender, "review deadline expired");
         } else {
             _creditPayout(seller, deposit.sub(realtorFee));
             _creditPayout(realtor, realtorFee);
+            emit TransactionRejected(msg.sender, "finalization deadline expired");
         }
     }
 
@@ -179,10 +201,13 @@ contract HomeTransaction {
 
         (bool success, ) = msg.sender.call.value(amount)("");
         require(success, "Withdrawal failed");
+
+        emit PayoutWithdrawn(msg.sender, amount);
     }
 
     function _creditPayout(address payable recipient, uint amount) internal {
         // Pending payouts are accumulated across settlement paths, so use checked addition.
         pendingWithdrawals[recipient] = pendingWithdrawals[recipient].add(amount);
+        emit PayoutCredited(recipient, amount);
     }
 }
