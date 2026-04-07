@@ -150,6 +150,10 @@ contract HomeTransaction {
     }
 
     function anyWithdrawFromTransaction() public {
+        require(
+            buyer == msg.sender || seller == msg.sender || realtor == msg.sender,
+            "Only a transaction participant can trigger withdrawal"
+        );
         require(buyer == msg.sender || finalizeDeadline <= now, "Only buyer can withdraw before transaction deadline");
 
         require(
