@@ -39,6 +39,7 @@ contract HomeTransaction {
     event TransactionRejected(address indexed triggeredBy, string reason);
     event PayoutCredited(address indexed recipient, uint amount);
     event PayoutWithdrawn(address indexed recipient, uint amount);
+    event SurplusEtherRescued(address indexed operator, address indexed recipient, uint amount);
 
     // Constants
     uint constant timeBetweenDepositAndFinalization = 5 minutes;
@@ -209,6 +210,26 @@ contract HomeTransaction {
         require(success, "Withdrawal failed");
 
         emit PayoutWithdrawn(recipient, amount);
+    }
+
+    function rescueSurplusEther(address payable recipient) public {
+        require(realtor == msg.sender, "Only realtor can rescue surplus ether");
+        require(recipient != address(0), "Recipient cannot be zero");
+        require(
+            contractState == ContractState.Finalized || contractState == ContractState.Rejected,
+            "Surplus rescue only allowed after settlement"
+        );
+
+        uint trackedBalance = pendingWithdrawals[buyer]
+            .add(pendingWithdrawals[seller])
+            .add(pendingWithdrawals[realtor]);
+        uint surplus = address(this).balance.sub(trackedBalance);
+        require(surplus > 0, "No surplus ether available");
+
+        (bool success, ) = recipient.call.value(surplus)("");
+        require(success, "Surplus rescue failed");
+
+        emit SurplusEtherRescued(msg.sender, recipient, surplus);
     }
 
     function _creditPayout(address payable recipient, uint amount) internal {

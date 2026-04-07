@@ -82,7 +82,7 @@ const getWallets = async (provider) => {
   return accounts.map((account) => provider.getSigner(account));
 };
 
-const deployContract = async ({ fileName, contractName, signer, args = [] }) => {
+const deployContract = async ({ fileName, contractName, signer, args = [], overrides = {} }) => {
   const artifact = getArtifact(fileName, contractName);
   const factory = new ethers.ContractFactory(
     artifact.abi,
@@ -90,7 +90,7 @@ const deployContract = async ({ fileName, contractName, signer, args = [] }) => 
     signer
   );
 
-  const contract = await factory.deploy(...args);
+  const contract = await factory.deploy(...args, overrides);
   await contract.deployed();
   return contract;
 };
