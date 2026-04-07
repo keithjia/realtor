@@ -8,8 +8,8 @@ module.exports = {
     state_model.find({ is_active: true })
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).send(data);
+          return res.status(400).send(err);
+        return res.status(200).send(data);
       });
   },
   addState: (req, res) => {
@@ -18,8 +18,8 @@ module.exports = {
 
     state.save((err) => {
       if (err)
-        res.send(err);
-      res.json({ message: 'State added successfully' });
+        return res.send(err);
+      return res.json({ message: 'State added successfully' });
     })
   },
   getAllCities: (req, res) => {
@@ -27,8 +27,8 @@ module.exports = {
       .populate('state_id', 'name')
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).json(data);
+          return res.status(400).send(err);
+        return res.status(200).json(data);
       });
   },
   getCityList: (req, res) => {
@@ -36,8 +36,8 @@ module.exports = {
       .populate('state_id', 'name')
       .exec((err, data) => {
         if (err)
-          res.status(400).send(err);
-        res.status(200).json(data);
+          return res.status(400).send(err);
+        return res.status(200).json(data);
       });
   },
   addCity: async (req, res) => {
@@ -55,8 +55,8 @@ module.exports = {
   removeCity: (req, res) => {
     city_model.remove({ _id: req.params.cityId }, (err, result) => {
       if (err)
-        res.status(400).send(err);
-      res.status(200).json({ message: 'City removed successfully', data: result });
+        return res.status(400).send(err);
+      return res.status(200).json({ message: 'City removed successfully', data: result });
     })
   },
   checkemailAvailability: (req, res) => {
