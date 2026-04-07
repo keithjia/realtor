@@ -2,20 +2,21 @@ const express = require('express');
 var app = express();
 
 var commonController = require('../controllers/common.controller');
+const { requireAdmin } = require('../middleware/auth');
 
 var router = express.Router();
 
 router.route('/state')
   .get(commonController.getStateList)
-  .post(commonController.addState)
+  .post(requireAdmin, commonController.addState)
 
 router.route('/cities')
   .get(commonController.getAllCities)
-  .post(commonController.addCity)
+  .post(requireAdmin, commonController.addCity)
 
 router.get('/cities/:state_id', commonController.getCityList)
 
-router.delete('/city/:cityId', commonController.removeCity)
+router.delete('/city/:cityId', requireAdmin, commonController.removeCity)
 
 router.get('/checkemail-availability/email/:email', commonController.checkemailAvailability)
 
