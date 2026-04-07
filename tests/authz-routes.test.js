@@ -4,7 +4,12 @@ const jwt = require("jsonwebtoken");
 const Module = require("module");
 const path = require("path");
 
-const { secretKey } = require("../server/config/config");
+const {
+  secretKey,
+  jwtIssuer,
+  jwtAudience,
+  jwtExpiresIn,
+} = require("../server/config/config");
 
 const createToken = (overrides = {}) =>
   jwt.sign(
@@ -16,7 +21,14 @@ const createToken = (overrides = {}) =>
         ...overrides,
       },
     },
-    secretKey
+    secretKey,
+    {
+      issuer: jwtIssuer,
+      audience: jwtAudience,
+      expiresIn: jwtExpiresIn,
+      algorithm: "HS256",
+      subject: String(overrides._id || "user-1"),
+    }
   );
 
 const loadModuleWithStubs = (modulePath, stubs) => {

@@ -56,7 +56,7 @@
     "server": "node server/app.js",
     "client": "react-app-rewired start",
     "build": "react-app-rewired build",
-    "test": "mocha \"tests/**/*.test.js\"",
+    "test": "mocha --require tests/setup.js \"tests/**/*.test.js\"",
     "test:client": "react-app-rewired test",
     "eject": "echo \"Not Support eject\""
   },

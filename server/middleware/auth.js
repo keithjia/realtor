@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const { secretKey } = require("../config/config");
+const { secretKey, jwtIssuer, jwtAudience } = require("../config/config");
 
 const getTokenFromRequest = (req) => {
   const authHeader = req.headers.authorization || "";
@@ -13,6 +13,10 @@ const getTokenFromRequest = (req) => {
 };
 
 const requireAuth = (req, res, next) => {
+  if (!secretKey) {
+    return res.status(500).json({ message: "JWT configuration is missing" });
+  }
+
   const token = getTokenFromRequest(req);
 
   if (!token) {
@@ -20,7 +24,11 @@ const requireAuth = (req, res, next) => {
   }
 
   try {
-    const payload = jwt.verify(token, secretKey);
+    const payload = jwt.verify(token, secretKey, {
+      algorithms: ["HS256"],
+      issuer: jwtIssuer,
+      audience: jwtAudience,
+    });
     req.user = payload.user || payload;
     return next();
   } catch (err) {

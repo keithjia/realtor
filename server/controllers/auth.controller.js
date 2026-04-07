@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userM = require("../models/users");
-const {secretKey} = require("../config/config");
+const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
 
 module.exports = {
   userLogin: (req, res) => {
@@ -21,6 +21,10 @@ module.exports = {
             ) {
               if (err) res.status(400).send(err);
               else if (passMatch) {
+                if (!secretKey) {
+                  return res.status(500).json({ message: "JWT configuration is missing" });
+                }
+
                 let jwtData = {
                   _id: data["_id"],
                   fname: data["fname"],
@@ -28,7 +32,17 @@ module.exports = {
                   email: data["email"],
                   isAdmin: data["isAdmin"]
                 };
-                var token = jwt.sign({ user: jwtData }, secretKey);
+                var token = jwt.sign(
+                  { user: jwtData },
+                  secretKey,
+                  {
+                    expiresIn: jwtExpiresIn,
+                    issuer: jwtIssuer,
+                    audience: jwtAudience,
+                    algorithm: "HS256",
+                    subject: String(data["_id"])
+                  }
+                );
                 res
                   .status(200)
                   .json({ message: "Login Successful", token: token });
