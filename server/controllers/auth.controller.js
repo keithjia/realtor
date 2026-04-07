@@ -93,6 +93,18 @@ module.exports = {
   },
   changePass: async (req, res) => {
     try {
+      const authenticatedUser = req.user || {};
+      const targetUserId = String(req.body._id || "");
+      const authenticatedUserId = String(authenticatedUser._id || "");
+
+      if (!targetUserId) {
+        return res.status(400).json({ message: "User id is required" });
+      }
+
+      if (!authenticatedUser.isAdmin && authenticatedUserId !== targetUserId) {
+        return res.status(403).json({ message: "Not authorized to change this password" });
+      }
+
       await userM.findOne({ _id: req.body._id });
       const hash = await bcrypt.hash(req.body.password, 10);
       const resp = await userM.updateOne({ _id: req.body._id }, { password: hash });
