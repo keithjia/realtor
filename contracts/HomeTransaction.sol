@@ -109,11 +109,18 @@ contract HomeTransaction {
     function anyWithdrawFromTransaction() public {
         require(buyer == msg.sender || finalizeDeadline <= now, "Only buyer can withdraw before transaction deadline");
 
-        require(contractState == ContractState.WaitingFinalization, "Wrong contract state");
+        require(
+            contractState == ContractState.WaitingFinalization || contractState == ContractState.WaitingRealtorReview,
+            "Wrong contract state"
+        );
 
         contractState = ContractState.Rejected;
 
-        seller.transfer(deposit-realtorFee);
-        realtor.transfer(realtorFee);
+        if (closingConditionsReview == ClosingConditionsReview.Pending) {
+            buyer.transfer(deposit);
+        } else {
+            seller.transfer(deposit-realtorFee);
+            realtor.transfer(realtorFee);
+        }
     }
 }
