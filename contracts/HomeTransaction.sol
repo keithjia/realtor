@@ -45,6 +45,7 @@ contract HomeTransaction {
         address payable _seller,
         address payable _buyer) public {
         require(_price >= _realtorFee, "Price needs to be more than realtor fee!");
+        require(_price * depositPercentage / 100 >= _realtorFee, "Minimum buyer deposit must cover realtor fee");
 
         realtor = _realtor;
         seller = _seller;
