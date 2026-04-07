@@ -47,6 +47,14 @@ describe("jwt security regressions", () => {
     delete require.cache[configPath];
   });
 
+  it("does not expose stale publicKey startup config", () => {
+    const config = loadFreshModule(
+      path.resolve(__dirname, "../server/config/config.js")
+    );
+
+    assert.strictEqual("publicKey" in config, false);
+  });
+
   it("signs login tokens with expiry, issuer, audience, algorithm, and subject", async () => {
     const signCalls = [];
     const authController = loadModuleWithStubs(
