@@ -97,6 +97,7 @@ contract HomeTransaction {
         require(buyer == msg.sender, "Only buyer can finalize transaction");
 
         require(contractState == ContractState.WaitingFinalization, "Wrong contract state");
+        require(now <= finalizeDeadline, "Finalization deadline has expired");
 
         require(msg.value + deposit == price, "Buyer needs to pay the rest of the cost to finalize transaction");
 
