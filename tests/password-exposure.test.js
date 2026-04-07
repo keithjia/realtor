@@ -32,7 +32,7 @@ describe("password exposure regressions", () => {
     assert.strictEqual(passwordPath.options.select, false);
   });
 
-  it("excludes password hashes from the admin user list response query", () => {
+  it("excludes password hashes from the admin user list response query", async () => {
     /*
      * Regression test for:
      *
@@ -55,11 +55,8 @@ describe("password exposure regressions", () => {
           find: () => ({
             select(value) {
               selectArg = value;
-              return this;
-            },
-            exec(callback) {
               execCalled = true;
-              callback(null, []);
+              return Promise.resolve([]);
             },
           }),
         },
@@ -79,7 +76,7 @@ describe("password exposure regressions", () => {
       },
     };
 
-    authController.userList({}, res);
+    await authController.userList({}, res);
 
     assert.strictEqual(selectArg, "-password");
     assert.strictEqual(execCalled, true);

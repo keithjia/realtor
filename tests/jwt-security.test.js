@@ -47,7 +47,7 @@ describe("jwt security regressions", () => {
     delete require.cache[configPath];
   });
 
-  it("signs login tokens with expiry, issuer, audience, algorithm, and subject", (done) => {
+  it("signs login tokens with expiry, issuer, audience, algorithm, and subject", async () => {
     const signCalls = [];
     const authController = loadModuleWithStubs(
       path.resolve(__dirname, "../server/controllers/auth.controller.js"),
@@ -64,8 +64,8 @@ describe("jwt security regressions", () => {
               where() {
                 return this;
               },
-              exec(callback) {
-                callback(null, {
+              select() {
+                return Promise.resolve({
                   _id: "507f1f77bcf86cd799439011",
                   fname: "Keith",
                   lname: "Jia",
@@ -78,8 +78,8 @@ describe("jwt security regressions", () => {
           },
         },
         bcryptjs: {
-          compare(password, hash, callback) {
-            callback(null, true);
+          compare() {
+            return Promise.resolve(true);
           },
         },
       }
@@ -100,31 +100,27 @@ describe("jwt security regressions", () => {
       },
       json(payload) {
         this.body = payload;
-        try {
-          assert.strictEqual(this.statusCode, 200);
-          assert.strictEqual(signCalls.length, 1);
-          assert.strictEqual(signCalls[0].secret, process.env.JWT_SECRET);
-          assert.deepStrictEqual(signCalls[0].options, {
-            expiresIn: process.env.JWT_EXPIRES_IN,
-            issuer: process.env.JWT_ISSUER,
-            audience: process.env.JWT_AUDIENCE,
-            algorithm: "HS256",
-            subject: "507f1f77bcf86cd799439011",
-          });
-          assert.strictEqual(signCalls[0].payload.user.email, "keith@example.com");
-          assert.deepStrictEqual(payload, {
-            message: "Login Successful",
-            token: "signed-token",
-          });
-          done();
-        } catch (err) {
-          done(err);
-        }
         return this;
       },
     };
 
-    authController.userLogin(req, res);
+    await authController.userLogin(req, res);
+
+    assert.strictEqual(res.statusCode, 200);
+    assert.strictEqual(signCalls.length, 1);
+    assert.strictEqual(signCalls[0].secret, process.env.JWT_SECRET);
+    assert.deepStrictEqual(signCalls[0].options, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+      issuer: process.env.JWT_ISSUER,
+      audience: process.env.JWT_AUDIENCE,
+      algorithm: "HS256",
+      subject: "507f1f77bcf86cd799439011",
+    });
+    assert.strictEqual(signCalls[0].payload.user.email, "keith@example.com");
+    assert.deepStrictEqual(res.body, {
+      message: "Login Successful",
+      token: "signed-token",
+    });
   });
 
   it("requires valid issuer and audience claims when authenticating", () => {

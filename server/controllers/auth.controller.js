@@ -4,114 +4,107 @@ const userM = require("../models/users");
 const { secretKey, jwtIssuer, jwtAudience, jwtExpiresIn } = require("../config/config");
 
 module.exports = {
-  userLogin: (req, res) => {
-    var loginType;
-    if (req.body.emailPhone != "" && req.body.password != "") {
+  userLogin: async (req, res) => {
+    try {
+      let loginType;
+
+      if (req.body.emailPhone == "" || req.body.password == "") {
+        return res.status(400).json({ message: "Provide all Credentials" });
+      }
+
       if (isNaN(req.body.emailPhone)) loginType = "email";
       else loginType = "phoneNo";
-      userM
+
+      const data = await userM
         .findOne()
         .where(loginType, req.body.emailPhone)
-        .exec((err, data) => {
-          if (err) res.status(400).send(err);
-          else if (data) {
-            bcrypt.compare(req.body.password, data.password, function (
-              err,
-              passMatch
-            ) {
-              if (err) res.status(400).send(err);
-              else if (passMatch) {
-                if (!secretKey) {
-                  return res.status(500).json({ message: "JWT configuration is missing" });
-                }
+        .select("+password");
 
-                let jwtData = {
-                  _id: data["_id"],
-                  fname: data["fname"],
-                  lname: data["lname"],
-                  email: data["email"],
-                  isAdmin: data["isAdmin"]
-                };
-                var token = jwt.sign(
-                  { user: jwtData },
-                  secretKey,
-                  {
-                    expiresIn: jwtExpiresIn,
-                    issuer: jwtIssuer,
-                    audience: jwtAudience,
-                    algorithm: "HS256",
-                    subject: String(data["_id"])
-                  }
-                );
-                res
-                  .status(200)
-                  .json({ message: "Login Successful", token: token });
-              } else res.status(401).json({ message: "Invalid Credentials1" });
-            });
-          } else res.status(401).json({ message: "Invalid Credentials2" });
-        });
-    } else res.status(400).json({ message: "Provide all Credentials" });
-  },
-  userRegistration: (req, res) => {
-    users = new userM();
-    users.fname = req.body.fname;
-    users.lname = req.body.lName;
-    users.email = req.body.email;
-    users.phoneNo = req.body.phoneNo;
-    users.state = req.body.state;
-    users.city = req.body.city;
-    users.pincode = req.body.pincode;
-    users.userType = req.body.user_type;
-    users.createdOn = new Date();
-
-    bcrypt.hash(req.body.password, 10, function (err, hash) {
-      if (err) res.status(400).send(err);
-      else {
-        users.password = hash;
-
-        users.save((err, data) => {
-          if (err) res.status(400).send(err);
-          else
-            res
-              .status(200)
-              .json({ message: "User Added Successfully", id: data._id });
-        });
+      if (!data) {
+        return res.status(401).json({ message: "Invalid Credentials2" });
       }
-    });
-  },
-  userList: (req, res) => {
-    userM.find().select("-password").exec((err, data) => {
-      if (err)
-        res.status(400).json({ message: "Something Went Wrong", data: err });
-      else res.status(200).json({ message: "Success", data });
-    });
-  },
-  changePass: (req, res) => {
-    userM.findOne({ _id: req.body._id }).exec((err, resp) => {
-      if (err)
-        res.status(400).json({ message: "Something Went Wrong", data: err });
-      else {
-        bcrypt.hash(req.body.password, 10, (err, hash) => {
-          if (err) res.status(400).send(err);
-          else {
-            userM
-              .updateOne({ _id: req.body._id }, { password: hash })
-              .exec((err, resp) => {
-                if (err)
-                  res
-                    .status(400)
-                    .json({ message: "Something Went Wrong", data: err });
-                else
-                  res
-                    .status(200)
-                    .json({
-                      message: "Password Changed Successfully",
-                      id: resp
-                    });
-              });
-          }
-        });
+
+      const passMatch = await bcrypt.compare(req.body.password, data.password);
+
+      if (!passMatch) {
+        return res.status(401).json({ message: "Invalid Credentials1" });
       }
-    });
+
+      if (!secretKey) {
+        return res.status(500).json({ message: "JWT configuration is missing" });
+      }
+
+      let jwtData = {
+        _id: data["_id"],
+        fname: data["fname"],
+        lname: data["lname"],
+        email: data["email"],
+        isAdmin: data["isAdmin"]
+      };
+      var token = jwt.sign(
+        { user: jwtData },
+        secretKey,
+        {
+          expiresIn: jwtExpiresIn,
+          issuer: jwtIssuer,
+          audience: jwtAudience,
+          algorithm: "HS256",
+          subject: String(data["_id"])
+        }
+      );
+
+      return res
+        .status(200)
+        .json({ message: "Login Successful", token: token });
+    } catch (err) {
+      return res.status(400).send(err);
+    }
+  },
+  userRegistration: async (req, res) => {
+    try {
+      const users = new userM();
+      users.fname = req.body.fname;
+      users.lname = req.body.lName;
+      users.email = req.body.email;
+      users.phoneNo = req.body.phoneNo;
+      users.state = req.body.state;
+      users.city = req.body.city;
+      users.pincode = req.body.pincode;
+      users.userType = req.body.user_type;
+      users.createdOn = new Date();
+      users.password = await bcrypt.hash(req.body.password, 10);
+
+      const data = await users.save();
+
+      return res
+        .status(200)
+        .json({ message: "User Added Successfully", id: data._id });
+    } catch (err) {
+      return res.status(400).send(err);
+    }
+  },
+  userList: async (req, res) => {
+    try {
+      const data = await userM.find().select("-password");
+      return res.status(200).json({ message: "Success", data });
+    } catch (err) {
+      return res.status(400).json({ message: "Something Went Wrong", data: err });
+    }
+  },
+  changePass: async (req, res) => {
+    try {
+      await userM.findOne({ _id: req.body._id });
+      const hash = await bcrypt.hash(req.body.password, 10);
+      const resp = await userM.updateOne({ _id: req.body._id }, { password: hash });
+
+      return res
+        .status(200)
+        .json({
+          message: "Password Changed Successfully",
+          id: resp
+        });
+    } catch (err) {
+      return res.status(400).json({ message: "Something Went Wrong", data: err });
+    }
   }
 };
