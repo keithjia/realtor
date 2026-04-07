@@ -106,7 +106,12 @@ module.exports = {
         return res.status(403).json({ message: "Not authorized to change this password" });
       }
 
-      await userM.findOne({ _id: req.body._id });
+      const targetUser = await userM.findOne({ _id: req.body._id });
+
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const hash = await bcrypt.hash(req.body.password, 10);
       const resp = await userM.updateOne({ _id: req.body._id }, { password: hash });
 

@@ -158,4 +158,47 @@ describe("changePass authorization regressions", () => {
     });
     assert.strictEqual(updateCalled, false);
   });
+
+  it("returns not found when the target user does not exist", async () => {
+    let hashCalled = false;
+    let updateCalled = false;
+
+    const authController = loadModuleWithStubs(
+      path.resolve(__dirname, "../server/controllers/auth.controller.js"),
+      {
+        "../models/users": {
+          findOne() {
+            return Promise.resolve(null);
+          },
+          updateOne() {
+            updateCalled = true;
+            return Promise.resolve({ acknowledged: true, modifiedCount: 1 });
+          },
+        },
+        bcryptjs: {
+          hash() {
+            hashCalled = true;
+            return Promise.resolve("hashed:new-secret");
+          },
+        },
+      }
+    );
+
+    const res = createResponseRecorder();
+
+    await authController.changePass(
+      {
+        user: { _id: "admin-1", isAdmin: true },
+        body: { _id: "missing-user", password: "new-secret" },
+      },
+      res
+    );
+
+    assert.strictEqual(res.statusCode, 404);
+    assert.deepStrictEqual(res.payload, {
+      message: "User not found",
+    });
+    assert.strictEqual(hashCalled, false);
+    assert.strictEqual(updateCalled, false);
+  });
 });
