@@ -9,7 +9,13 @@ const router = express.Router();
 const propertyController = require('../controllers/property.controller');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5
+  }
+});
 
 let gfs;
 

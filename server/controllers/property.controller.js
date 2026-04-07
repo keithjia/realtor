@@ -38,12 +38,23 @@ module.exports = {
   addNewProperty: async (req, res) => {
     let imgs = [];
     try {
+      const imageStore = req.gfs || gfs;
+
       if (!req.user || !req.user._id) {
         throw new Error('Authenticated user is required');
       }
 
-      if (req.files && req.files.length)
+      if (req.files && req.files.length) {
+        if (!imageStore) {
+          throw new Error('Image storage backend is not available');
+        }
+
+        if (req.files.some((file) => !file.filename)) {
+          throw new Error('Uploaded images could not be persisted');
+        }
+
         req.files.forEach(ele => imgs.push(ele.filename))
+      }
       var slug = await helpers.slugGenerator(req.body.title, 'title', 'property');
       req.body.slug = slug;
       req.body.type = req.body.Proptype;
@@ -81,6 +92,7 @@ module.exports = {
   },
   getSingleProperty: async (req, res) => {
     try {
+      const imageStore = req.gfs || gfs;
       var result = await Property.findOne({ slug: req.params.propertySlug })
         .populate('city', 'name')
         .populate('state', 'name')
@@ -88,7 +100,11 @@ module.exports = {
 
       var files = [];
       if (result && result.images.length) {
-        files = await gfs.files.find({ filename: { $in: result.images } }).toArray();
+        if (!imageStore) {
+          throw new Error('Image storage backend is not available');
+        }
+
+        files = await imageStore.files.find({ filename: { $in: result.images } }).toArray();
       }
       if (result) res.status(200).json({ result, files });
       else throw new Error('Something Went Wrong');
@@ -155,14 +171,22 @@ module.exports = {
     return res.send(testData);
   },
   showGFSImage: (req, res) => {
-    gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+    const imageStore = req.gfs || gfs;
+
+    if (!imageStore) {
+      return res.status(503).json({
+        err: 'Image storage backend is not available'
+      });
+    }
+
+    imageStore.files.findOne({ filename: req.params.filename }, (err, file) => {
       if (!file || file.length === 0) {
         return res.status(404).json({
           err: 'No file exists'
         });
       }
       if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
-        const readstream = gfs.createReadStream(file.filename);
+        const readstream = imageStore.createReadStream(file.filename);
         readstream.pipe(res);
       } else {
         res.status(404).json({
